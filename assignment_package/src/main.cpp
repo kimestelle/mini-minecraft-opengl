@@ -3,6 +3,12 @@
 #include <QApplication>
 #include <QSurfaceFormat>
 #include <QDebug>
+#ifdef Q_OS_MAC
+    #include <ApplicationServices/ApplicationServices.h>
+#endif
+#include <iostream>
+#include <QMessageBox>
+#include <QPushButton>
 
 void debugFormatVersion()
 {
@@ -39,6 +45,39 @@ int main(int argc, char *argv[])
 
     MainWindow w;
     w.show();
+
+#ifdef Q_OS_MAC
+    bool trusted = false;
+    while (!trusted) {
+        CFStringRef keys[] = { kAXTrustedCheckOptionPrompt };
+        CFTypeRef values[] = { kCFBooleanTrue };
+        CFDictionaryRef options = CFDictionaryCreate(NULL,
+                                                     (const void **)&keys,
+                                                     (const void **)&values,
+                                                     sizeof(keys) / sizeof(keys[0]),
+                                                     &kCFTypeDictionaryKeyCallBacks,
+                                                     &kCFTypeDictionaryValueCallBacks);
+        if (AXIsProcessTrustedWithOptions(options)) {
+            std::cout << "Trusted accessibility client!" << std::endl;
+            trusted = true;
+        } else {
+            std::cout << "Not a trusted accessibility client." << std::endl;
+            QMessageBox msgBox;
+            msgBox.setWindowTitle("Allow Accessibility");
+            msgBox.setTextFormat(Qt::RichText);
+            msgBox.setText("Please allow MiniMinecraft to move the mouse. You may need to go to Settings -> Privacy & Security -> Accessibility, and then find MiniMinecraft and toggle it on.<br><br><i>If it does not work, try removing MiniMinecraft from the list (with the \"-\" button) and then retrying.</i>");
+            QPushButton* retryButton = new QPushButton("Retry");
+            msgBox.addButton(retryButton, QMessageBox::AcceptRole);
+            QPushButton* closeButton = new QPushButton("Close");
+            msgBox.addButton(closeButton, QMessageBox::RejectRole);
+            if (msgBox.exec() == QMessageBox::RejectRole) {
+                QApplication::quit();
+                return 0;
+            }
+        }
+        CFRelease(options);
+    }
+#endif
 
     return a.exec();
 }

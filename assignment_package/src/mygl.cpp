@@ -4,13 +4,15 @@
 #include <iostream>
 #include <QApplication>
 #include <QKeyEvent>
+#include <QDateTime>
 
 
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain)
+      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
+      m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -90,6 +92,15 @@ void MyGL::resizeGL(int w, int h) {
 // all per-frame actions here, such as performing physics updates on all
 // entities in the scene.
 void MyGL::tick() {
+    // Calculate dT
+    qint64 currentTime = QDateTime::currentMSecsSinceEpoch();
+    float dT = (currentTime - m_lastTime) / 1000.f;
+    if (dT > 0) {
+        m_lastTime = currentTime;
+    }
+    m_player.tick(dT, m_inputs); // Player-side tick
+    m_inputs.mouseX = 0;
+    m_inputs.mouseY = 0;
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
 }
@@ -139,42 +150,92 @@ void MyGL::keyPressEvent(QKeyEvent *e) {
     if(e->modifiers() & Qt::ShiftModifier){
         amount = 10.0f;
     }
-    // http://doc.qt.io/qt-5/qt.html#Key-enum
-    // This could all be much more efficient if a switch
-    // statement were used, but I really dislike their
-    // syntax so I chose to be lazy and use a long
-    // chain of if statements instead
-    if (e->key() == Qt::Key_Escape) {
-        QApplication::quit();
-    } else if (e->key() == Qt::Key_Right) {
-        m_player.rotateOnUpGlobal(-amount);
-    } else if (e->key() == Qt::Key_Left) {
-        m_player.rotateOnUpGlobal(amount);
-    } else if (e->key() == Qt::Key_Up) {
-        m_player.rotateOnRightLocal(-amount);
-    } else if (e->key() == Qt::Key_Down) {
-        m_player.rotateOnRightLocal(amount);
-    } else if (e->key() == Qt::Key_W) {
-        m_player.moveForwardLocal(amount);
-    } else if (e->key() == Qt::Key_S) {
-        m_player.moveForwardLocal(-amount);
-    } else if (e->key() == Qt::Key_D) {
-        m_player.moveRightLocal(amount);
-    } else if (e->key() == Qt::Key_A) {
-        m_player.moveRightLocal(-amount);
-    } else if (e->key() == Qt::Key_Q) {
-        m_player.moveUpGlobal(-amount);
-    } else if (e->key() == Qt::Key_E) {
-        m_player.moveUpGlobal(amount);
+    switch (e->key()) {
+        case Qt::Key_Escape:
+            QApplication::quit();
+            break;
+        case Qt::Key_Right:
+            m_player.rotateOnUpGlobal(-amount);
+            break;
+        case Qt::Key_Left:
+            m_player.rotateOnUpGlobal(amount);
+            break;
+        case Qt::Key_Up:
+            m_player.rotateOnRightLocal(-amount);
+            break;
+        case Qt::Key_Down:
+            m_player.rotateOnRightLocal(amount);
+            break;
+        case Qt::Key_W:
+            m_inputs.wPressed = true;
+            break;
+        case Qt::Key_S:
+            m_inputs.sPressed = true;
+            break;
+        case Qt::Key_D:
+            m_inputs.dPressed = true;
+            break;
+        case Qt::Key_A:
+            m_inputs.aPressed = true;
+            break;
+        case Qt::Key_Q:
+            m_inputs.qPressed = true;
+            break;
+        case Qt::Key_E:
+            m_inputs.ePressed = true;
+            break;
+        case Qt::Key_Space:
+            m_inputs.spacePressed = true;
+            break;
+        case Qt::Key_F:
+            switch (m_player.m_movementMode) {
+                case MovementMode::WALKING:
+                    m_player.m_movementMode = MovementMode::FLYING;
+                    break;
+                case MovementMode::FLYING:
+                    m_player.m_movementMode = MovementMode::WALKING;
+                    break;
+            }
+        default:
+            break;
     }
 }
 
 void MyGL::keyReleaseEvent(QKeyEvent *e) {
-    ;
+    switch (e->key()) {
+        case Qt::Key_W:
+            m_inputs.wPressed = false;
+            break;
+        case Qt::Key_S:
+            m_inputs.sPressed = false;
+            break;
+        case Qt::Key_D:
+            m_inputs.dPressed = false;
+            break;
+        case Qt::Key_A:
+            m_inputs.aPressed = false;
+            break;
+        case Qt::Key_Q:
+            m_inputs.qPressed = false;
+            break;
+        case Qt::Key_E:
+            m_inputs.ePressed = false;
+            break;
+        case Qt::Key_Space:
+            m_inputs.spacePressed = false;
+            break;
+        default:
+            break;
+    }
 }
 
 void MyGL::mouseMoveEvent(QMouseEvent *e) {
-    // TODO
+    // update m_inputs.mouseX and m_inputs.mouseY
+    // based on the change in the mouse's position
+    // since the last change.
+    m_inputs.mouseX += width() / 2 - e->position().x();
+    m_inputs.mouseY += height() / 2 - e->position().y();
+    moveMouseToCenter();
 }
 
 void MyGL::mousePressEvent(QMouseEvent *e) {

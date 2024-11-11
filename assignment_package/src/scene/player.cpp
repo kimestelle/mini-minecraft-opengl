@@ -4,7 +4,8 @@
 Player::Player(glm::vec3 pos, const Terrain &terrain)
     : Entity(pos), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
-      mcr_camera(m_camera)
+      mcr_camera(m_camera), m_movementMode(MovementMode::WALKING),
+      m_mouseSensitivity(0.1f)
 {}
 
 Player::~Player()
@@ -18,11 +19,60 @@ void Player::tick(float dT, InputBundle &input) {
 void Player::processInputs(InputBundle &inputs) {
     // TODO: Update the Player's velocity and acceleration based on the
     // state of the inputs.
+    // first, update look direction
+    this->rotateOnRightLocal(inputs.mouseY * m_mouseSensitivity);
+    this->rotateOnUpGlobal(inputs.mouseX * m_mouseSensitivity);
+
+    this->m_acceleration = glm::vec3(0,0,0);
+    // update acceleration
+    switch (this->m_movementMode) {
+        case MovementMode::WALKING:
+            break;
+        case MovementMode::FLYING:
+            if (inputs.wPressed) {
+                this->m_acceleration += this->m_forward;
+            }
+            if (inputs.sPressed) {
+                this->m_acceleration -= this->m_forward;
+            }
+            if (inputs.dPressed) {
+                this->m_acceleration += this->m_right;
+            }
+            if (inputs.aPressed) {
+                this->m_acceleration -= this->m_right;
+            }
+            if (inputs.qPressed) {
+                this->m_acceleration -= this->m_up;
+            }
+            if (inputs.ePressed) {
+                this->m_acceleration += this->m_up;
+            }
+            if (glm::length(this->m_acceleration) > 0) {
+                this->m_acceleration = glm::normalize(this->m_acceleration);
+                this->m_acceleration *= 20.f;
+            }
+    }
 }
 
 void Player::computePhysics(float dT, const Terrain &terrain) {
     // TODO: Update the Player's position based on its acceleration
     // and velocity, and also perform collision detection.
+    switch (this->m_movementMode) {
+        case MovementMode::WALKING:
+            break;
+        case MovementMode::FLYING:
+            // first, apply drag
+            this->m_velocity *= glm::pow(0.1f, dT);
+            // then, apply acceleration
+            this->m_velocity += this->m_acceleration * dT;
+            // then, apply velocity
+            if (glm::length(this->m_velocity) > 23.f) {
+                this->m_velocity = glm::normalize(this->m_velocity);
+                this->m_velocity *= 23.f;
+            }
+            this->moveAlongVector(this->m_velocity * dT);
+            break;
+    }
 }
 
 void Player::setCameraWidthHeight(unsigned int w, unsigned int h) {
