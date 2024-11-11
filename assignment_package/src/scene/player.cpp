@@ -1,6 +1,21 @@
 #include "player.h"
 #include <QString>
 
+const glm::vec3 Player::corners[12] = {
+    glm::vec3(-0.5f, 0.f, -0.5f),
+    glm::vec3(-0.5f, 0.f, 0.5f),
+    glm::vec3(-0.5f, 2.0f, -0.5f),
+    glm::vec3(-0.5f, 2.0f, 0.5f),
+    glm::vec3(-0.5f, 1.0f, -0.5f),
+    glm::vec3(-0.5f, 1.0f, 0.5f),
+    glm::vec3(0.5f, 0.f, -0.5f),
+    glm::vec3(0.5f, 0.f, 0.5f),
+    glm::vec3(0.5f, 2.0f, -0.5f),
+    glm::vec3(0.5f, 2.0f, 0.5f),
+    glm::vec3(0.5f, 1.0f, -0.5f),
+    glm::vec3(0.5f, 1.0f, 0.5f)
+};
+
 Player::Player(glm::vec3 pos, const Terrain &terrain)
     : Entity(pos), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
@@ -27,6 +42,29 @@ void Player::processInputs(InputBundle &inputs) {
     // update acceleration
     switch (this->m_movementMode) {
         case MovementMode::WALKING:
+            if (inputs.wPressed) {
+                this->m_acceleration += this->m_forward;
+            }
+            if (inputs.sPressed) {
+                this->m_acceleration -= this->m_forward;
+            }
+            if (inputs.dPressed) {
+                this->m_acceleration += this->m_right;
+            }
+            if (inputs.aPressed) {
+                this->m_acceleration -= this->m_right;
+            }
+            if (inputs.qPressed) {
+                this->m_acceleration -= this->m_up;
+            }
+            if (inputs.ePressed) {
+                this->m_acceleration += this->m_up;
+            }
+            if (glm::length(this->m_acceleration) > 0) {
+                this->m_acceleration = glm::normalize(this->m_acceleration);
+                this->m_acceleration *= 20.f;
+            }
+            // TODO: update once collision is implemented
             break;
         case MovementMode::FLYING:
             if (inputs.wPressed) {
@@ -59,7 +97,66 @@ void Player::computePhysics(float dT, const Terrain &terrain) {
     // and velocity, and also perform collision detection.
     switch (this->m_movementMode) {
         case MovementMode::WALKING:
+        {
+            //TODO: modify drag based on state
+            this->m_velocity *= glm::pow(0.1f, dT);
+            this->m_velocity += this->m_acceleration * dT;
+            // volume cast along each corner of the player
+            glm::vec3 dist = this->m_velocity * dT;
+            for (int i = 0; i < 8; i++) {
+                glm::vec3 corner = this->m_position + corners[i];
+                // differing logic for front/back
+                int nextX;
+                if (corners[i].x > 0) {
+                    nextX = dist.x >= 0 ? glm::ceil(corner.x-0.01) : glm::floor(corner.x-0.01);
+                } else {
+                    nextX = dist.x >= 0 ? glm::ceil(corner.x+0.01) : glm::floor(corner.x+0.01);
+                }
+                while (glm::abs(nextX - corner.x) <= glm::abs(dist.x)) {
+                    int xCoord = dist.x >= 0 ? nextX : nextX-1;
+                    if (terrain.hasChunkAt(xCoord, corner.z) && terrain.getGlobalBlockAt(xCoord, corner.y, corner.z) != EMPTY) {
+                        dist.x = nextX - corner.x;
+                        this->m_velocity.x = 0;
+                        break;
+                    }
+                    nextX += dist.x >= 0 ? 1 : -1;
+                }
+                // differing logic for left/right
+                int nextZ;
+                if (corners[i].z > 0) {
+                    nextZ = dist.z >= 0 ? glm::ceil(corner.z-0.01) : glm::floor(corner.z-0.01);
+                } else {
+                    nextZ = dist.z >= 0 ? glm::ceil(corner.z+0.01) : glm::floor(corner.z+0.01);
+                }
+                while (glm::abs(nextZ - corner.z) <= glm::abs(dist.z)) {
+                    int zCoord = dist.z >= 0 ? nextZ : nextZ-1;
+                    if (terrain.hasChunkAt(corner.x, zCoord) && terrain.getGlobalBlockAt(corner.x, corner.y, zCoord) != EMPTY) {
+                        dist.z = nextZ - corner.z;
+                        this->m_velocity.z = 0;
+                        break;
+                    }
+                    nextZ += dist.z >= 0 ? 1 : -1;
+                }
+                // differing logic for up/down
+                int nextY;
+                if (corners[i].y > 1) {
+                    nextY = dist.y >= 0 ? glm::ceil(corner.y-0.01) : glm::floor(corner.y-0.01);
+                } else {
+                    nextY = dist.y >= 0 ? glm::ceil(corner.y+0.01) : glm::floor(corner.y+0.01);
+                }
+                while (glm::abs(nextY - corner.y) <= glm::abs(dist.y)) {
+                    int yCoord = dist.y >= 0 ? nextY : nextY-1;
+                    if (terrain.hasChunkAt(corner.x, corner.z) && terrain.getGlobalBlockAt(corner.x, yCoord, corner.z) != EMPTY) {
+                        dist.y = nextY - corner.y;
+                        this->m_velocity.y = 0;
+                        break;
+                    }
+                    nextY += dist.y >= 0 ? 1 : -1;
+                }
+            }
+            this->moveAlongVector(dist);
             break;
+        }
         case MovementMode::FLYING:
             // first, apply drag
             this->m_velocity *= glm::pow(0.1f, dT);

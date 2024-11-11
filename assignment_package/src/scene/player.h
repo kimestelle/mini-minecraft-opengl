@@ -17,6 +17,7 @@ private:
 
     void processInputs(InputBundle &inputs);
     void computePhysics(float dT, const Terrain &terrain);
+    static const glm::vec3 corners[12];
 
 public:
     // Readonly public reference to our camera
