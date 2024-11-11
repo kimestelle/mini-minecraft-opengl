@@ -91,6 +91,8 @@ void MyGL::resizeGL(int w, int h) {
 // entities in the scene.
 void MyGL::tick() {
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
+    //check terrain expansion
+    m_terrain.expandTerrainIfNeeded(m_player.mcr_position);
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
 }
 
@@ -117,11 +119,12 @@ void MyGL::paintGL() {
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
-
     renderTerrain();
 
     glDisable(GL_DEPTH_TEST);
     m_progFlat.setUnifMat4("u_Model", glm::mat4());
+    m_progLambert.setUnifMat4("u_Model", glm::mat4());
+    m_progLambert.setUnifMat4("u_ModelInvTr", glm::mat4());
     m_progFlat.draw(m_worldAxes);
     glEnable(GL_DEPTH_TEST);
 }
@@ -130,7 +133,7 @@ void MyGL::paintGL() {
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
 void MyGL::renderTerrain() {
-    m_terrain.draw(0, 64, 0, 64, &m_progInstanced);
+    m_terrain.draw(0, 64, 0, 64, &m_progLambert);
 }
 
 

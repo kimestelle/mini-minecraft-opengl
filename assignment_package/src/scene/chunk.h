@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <cstddef>
 
+#include <drawable.h>
+
 
 //using namespace std;
 
@@ -40,7 +42,7 @@ struct EnumHash {
 // to render the world block by block.
 
 // TODO have Chunk inherit from Drawable
-class Chunk {
+class Chunk : public Drawable {
 private:
     // All of the blocks contained within this Chunk
     std::array<BlockType, 65536> m_blocks;
@@ -53,7 +55,16 @@ private:
     std::unordered_map<Direction, Chunk*, EnumHash> m_neighbors;
 
 public:
-    Chunk(int x, int z);
+    Chunk(int x, int z, OpenGLContext* context);
+
+    void create();
+    void generateVBOData();
+    void loadVBO();
+    void updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, const glm::vec4& pos, BlockType t, int vC, std::vector<GLuint>& indices);
+
+    void createVBOdata() override;
+    GLenum drawMode() override { return GL_TRIANGLES; }
+
     BlockType getLocalBlockAt(unsigned int x, unsigned int y, unsigned int z) const;
     BlockType getLocalBlockAt(int x, int y, int z) const;
     void setLocalBlockAt(unsigned int x, unsigned int y, unsigned int z, BlockType t);
