@@ -3,6 +3,12 @@
 #include "camera.h"
 #include "terrain.h"
 
+// Enum of movement modes for the player
+enum class MovementMode {
+    WALKING,
+    FLYING
+};
+
 class Player : public Entity {
 private:
     glm::vec3 m_velocity, m_acceleration;
@@ -11,6 +17,9 @@ private:
 
     void processInputs(InputBundle &inputs);
     void computePhysics(float dT, const Terrain &terrain);
+    static const glm::vec3 corners[12];
+
+    bool isGrounded() const;
 
 public:
     // Readonly public reference to our camera
@@ -47,4 +56,7 @@ public:
     QString velAsQString() const;
     QString accAsQString() const;
     QString lookAsQString() const;
+
+    MovementMode m_movementMode;
+    float m_mouseSensitivity;
 };

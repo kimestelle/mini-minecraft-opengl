@@ -37,6 +37,8 @@ private:
 
     void sendPlayerDataToGUI() const;
 
+    qint64 m_lastTime; // Used to calculate dT in tick().
+
 
 public:
     explicit MyGL(QWidget *parent = nullptr);

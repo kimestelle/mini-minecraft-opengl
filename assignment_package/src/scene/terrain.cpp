@@ -108,6 +108,7 @@ void Terrain::setGlobalBlockAt(int x, int y, int z, BlockType t)
                            static_cast<unsigned int>(y),
                            static_cast<unsigned int>(z - chunkOrigin.y),
                            t);
+        m_chunkVBOsNeedUpdating = true;
     }
     else {
         throw std::out_of_range("Coordinates " + std::to_string(x) +
