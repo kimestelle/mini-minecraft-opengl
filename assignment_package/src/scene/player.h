@@ -19,6 +19,8 @@ private:
     void computePhysics(float dT, const Terrain &terrain);
     static const glm::vec3 corners[12];
 
+    bool isGrounded() const;
+
 public:
     // Readonly public reference to our camera
     // for easy access from MyGL

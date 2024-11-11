@@ -239,5 +239,54 @@ void MyGL::mouseMoveEvent(QMouseEvent *e) {
 }
 
 void MyGL::mousePressEvent(QMouseEvent *e) {
-    // TODO
+    // generate ray
+    glm::vec3 ray = m_player.mcr_camera.getLook();
+    glm::vec3 currPos = m_player.mcr_camera.mcr_position;
+    while (glm::length(currPos - m_player.mcr_camera.mcr_position) <= 3) {
+        float nextX = ray.x >= 0 ? std::ceil(currPos.x + 0.01f) : std::floor(currPos.x-0.01f);
+        float nextY = ray.y >= 0 ? std::ceil(currPos.y + 0.01f) : std::floor(currPos.y-0.01f);
+        float nextZ = ray.z >= 0 ? std::ceil(currPos.z + 0.01f) : std::floor(currPos.z-0.01f);
+        float xDist = (nextX - currPos.x) / ray.x;
+        float yDist = (nextY - currPos.y) / ray.y;
+        float zDist = (nextZ - currPos.z) / ray.z;
+        float minDist = std::min(xDist, std::min(yDist, zDist));
+        currPos += minDist * ray;
+        if (xDist == minDist) {
+            currPos.x = glm::round(currPos.x);
+            currPos.x = ray.x >= 0 ? currPos.x + 0.01f : currPos.x - 0.01f;
+        } else if (yDist == minDist) {
+            currPos.y = glm::round(currPos.y);
+            currPos.y = ray.y >= 0 ? currPos.y + 0.01f : currPos.y - 0.01f;
+        } else {
+            currPos.z = glm::round(currPos.z);
+            currPos.z = ray.z >= 0 ? currPos.z + 0.01f : currPos.z - 0.01f;
+        }
+        if (m_terrain.hasChunkAt(currPos.x, currPos.z) && m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z) != EMPTY) {
+            switch (e->button()) {
+                case Qt::LeftButton:
+                    m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
+                    break;
+                case Qt::RightButton:
+                {
+                    glm::vec3 shift = glm::vec3(0.f);
+                    if (xDist == minDist) {
+                        shift.x += ray.x >= 0 ? -1 : 1;
+                    }
+                    if (yDist == minDist) {
+                        shift.y += ray.y >= 0 ? -1 : 1;
+                    }
+                    if (zDist == minDist) {
+                        shift.z += ray.z >= 0 ? -1 : 1;
+                    }
+                    if (m_terrain.hasChunkAt(currPos.x + shift.x, currPos.z + shift.z) && m_terrain.getGlobalBlockAt(currPos.x + shift.x, currPos.y + shift.y, currPos.z + shift.z) == EMPTY) {
+                        m_terrain.setGlobalBlockAt(currPos.x + shift.x, currPos.y + shift.y, currPos.z + shift.z, GRASS);
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+            break;
+        }
+    }
 }

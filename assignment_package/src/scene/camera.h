@@ -21,4 +21,5 @@ public:
     void tick(float dT, InputBundle &input) override;
 
     glm::mat4 getViewProj() const;
+    glm::vec3 getLook() const;
 };

@@ -42,11 +42,13 @@ void Player::processInputs(InputBundle &inputs) {
     // update acceleration
     switch (this->m_movementMode) {
         case MovementMode::WALKING:
+        {
+            bool grounded = isGrounded();
             if (inputs.wPressed) {
-                this->m_acceleration += this->m_forward;
+                this->m_acceleration += glm::normalize(glm::vec3(this->m_forward.x, 0, this->m_forward.z));
             }
             if (inputs.sPressed) {
-                this->m_acceleration -= this->m_forward;
+                this->m_acceleration -= glm::normalize(glm::vec3(this->m_forward.x, 0, this->m_forward.z));
             }
             if (inputs.dPressed) {
                 this->m_acceleration += this->m_right;
@@ -54,18 +56,16 @@ void Player::processInputs(InputBundle &inputs) {
             if (inputs.aPressed) {
                 this->m_acceleration -= this->m_right;
             }
-            if (inputs.qPressed) {
-                this->m_acceleration -= this->m_up;
-            }
-            if (inputs.ePressed) {
-                this->m_acceleration += this->m_up;
-            }
             if (glm::length(this->m_acceleration) > 0) {
                 this->m_acceleration = glm::normalize(this->m_acceleration);
-                this->m_acceleration *= 20.f;
+                this->m_acceleration *= grounded ? 50.f : 15.f;
             }
-            // TODO: update once collision is implemented
+            if (inputs.spacePressed && grounded) {
+                this->m_velocity.y = 7.f;
+            }
+            this->m_acceleration.y = -12.f;
             break;
+        }
         case MovementMode::FLYING:
             if (inputs.wPressed) {
                 this->m_acceleration += this->m_forward;
@@ -98,12 +98,15 @@ void Player::computePhysics(float dT, const Terrain &terrain) {
     switch (this->m_movementMode) {
         case MovementMode::WALKING:
         {
-            //TODO: modify drag based on state
-            this->m_velocity *= glm::pow(0.1f, dT);
+            bool grounded = isGrounded();
+            this->m_velocity.x *= grounded ? glm::pow(0.005f, dT) : glm::pow(0.15f, dT);
+            this->m_velocity.z *= grounded ? glm::pow(0.005f, dT) : glm::pow(0.15f, dT);
+            this->m_velocity.y *= glm::pow(0.67f, dT);
+
             this->m_velocity += this->m_acceleration * dT;
             // volume cast along each corner of the player
             glm::vec3 dist = this->m_velocity * dT;
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 12; i++) {
                 glm::vec3 corner = this->m_position + corners[i];
                 // differing logic for front/back
                 int nextX;
@@ -170,6 +173,18 @@ void Player::computePhysics(float dT, const Terrain &terrain) {
             this->moveAlongVector(this->m_velocity * dT);
             break;
     }
+}
+
+bool Player::isGrounded() const {
+    int feet[4] = {0, 1, 6, 7};
+    for (int foot: feet) {
+        glm::vec3 corner = this->m_position + corners[foot];
+        int yPos = glm::floor(corner.y-0.01f);
+        if (this->mcr_terrain.hasChunkAt(corner.x, corner.z) && this->mcr_terrain.getGlobalBlockAt(corner.x, yPos, corner.z) != EMPTY) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void Player::setCameraWidthHeight(unsigned int w, unsigned int h) {
