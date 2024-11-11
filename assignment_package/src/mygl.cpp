@@ -65,7 +65,7 @@ void MyGL::initializeGL()
     // using multiple VAOs, we can just bind one once.
     glBindVertexArray(vao);
 
-    m_terrain.CreateTestScene();
+    m_terrain.GenerateTerrain();
 }
 
 

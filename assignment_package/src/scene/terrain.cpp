@@ -1,5 +1,6 @@
 #include "terrain.h"
 #include "cube.h"
+#include <random>
 #include <stdexcept>
 #include <iostream>
 
@@ -231,3 +232,126 @@ void Terrain::CreateTestScene()
         setGlobalBlockAt(32, y, 32, GRASS);
     }
 }
+
+
+float PerlinNoise(float x, float y);
+
+
+void Terrain::GenerateTerrain()  {
+    // TODO: DELETE THIS LINE WHEN YOU DELETE m_geomCube!
+    m_geomCube.createVBOdata();
+
+    // Create the Chunks that will
+    // store the blocks for our
+    // initial world space
+    for(int x = 0; x < 64; x += 16) {
+        for(int z = 0; z < 64; z += 16) {
+            instantiateChunkAt(x, z);
+        }
+    }
+    // Tell our existing terrain set that
+    // the "generated terrain zone" at (0,0)
+    // now exists.
+    m_generatedTerrain.insert(toKey(0, 0));
+
+
+    // Create the basic terrain floor
+    for(int y = 0; y < 256; y++) {
+        for (int x = 0; x < 64; x++) {
+            for (int z = 0; z < 64; z++) {
+                float noise = PerlinNoise(0.25 * x * 0.6237f, 0.25 * z * 0.5663f);
+
+                if (y <= 128) {
+                    setGlobalBlockAt(x, y, z, GRASS);
+                } else if (y == 129) {
+                    if(noise >= (0.2 + (y - 128) * 0.1)) {
+                        setGlobalBlockAt(x, y, z, GRASS);
+                    }
+                }
+                else {
+                    if(getGlobalBlockAt(x, y-1, z) != EMPTY) {
+                        float rand = PerlinNoise(x * 0.15f  * 0.6678f + 537.6523f, (y - 128) * 0.15f * 0.6734f + 5272.545f);
+
+                        rand -= glm::max(noise * 0.5f, 0.0f);
+
+                        if (rand < 0.8 - 0.1f * (y - 128)) {
+                            setGlobalBlockAt(x, y, z, GRASS);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+float PerlinNoise(float x, float y) {
+    // Fade function to smooth the interpolation
+    auto fade = [](float t) { return t * t * t * (t * (t * 6 - 15) + 10); };
+
+    // Gradient function (returns a pseudo-random gradient value)
+    auto grad = [](int hash, float x, float y) -> float {
+        int h = hash & 15;
+        float u = (h < 8) ? x : y;
+        float v = (h < 4) ? y : (h == 12 || h == 14) ? x : 0;
+        return (h & 1 ? -u : u) + (h & 2 ? -v : v);
+    };
+
+    // Permutation table (fixed, deterministic)
+    static const int p[] = {
+        151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225,
+        140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, 190, 6, 148,
+        247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32,
+        57, 177, 33, 88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175,
+        74, 165, 71, 134, 139, 48, 27, 166, 77, 146, 158, 231, 83, 109, 32, 41,
+        131, 94, 255, 125, 48, 167, 57, 183, 146, 103, 190, 38, 127, 190, 115, 103
+    };
+
+    // Hash function to map 2D coordinates to a deterministic pseudo-random value
+    auto hash = [&](int x, int y) -> int {
+        return p[(x + p[(y & 255)]) & 255];
+    };
+
+    // Determine grid cell coordinates
+    int X = static_cast<int>(std::floor(x)) & 255;
+    int Y = static_cast<int>(std::floor(y)) & 255;
+
+    // Relative coordinates in grid cell
+    float xf = x - std::floor(x);
+    float yf = y - std::floor(y);
+
+    // Fade curves for smooth interpolation
+    float u = fade(xf);
+    float v = fade(yf);
+
+    // Hash coordinates of the 4 corners of the unit square
+    int aa = hash(X, Y);
+    int ab = hash(X, Y + 1);
+    int ba = hash(X + 1, Y);
+    int bb = hash(X + 1, Y + 1);
+
+    // Interpolate gradients using fade function
+    float gradAA = grad(aa, xf, yf);
+    float gradAB = grad(ab, xf, yf - 1);
+    float gradBA = grad(ba, xf - 1, yf);
+    float gradBB = grad(bb, xf - 1, yf - 1);
+
+    // Interpolate the results
+    float x1 = glm::mix(gradAA, gradBA, u);
+    float x2 = glm::mix(gradAB, gradBB, u);
+    return glm::mix(x1, x2, v) * 0.5f + 0.5f; // Normalize the result to [0, 1]
+}
+
+
+
+
+
+// terrain functions
+
+
+
+
+
+
+
