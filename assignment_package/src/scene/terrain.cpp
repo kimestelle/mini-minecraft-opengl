@@ -289,25 +289,44 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
     for(int y = 0; y < 256; y++) {
         for (int x = xPos; x < 16*WinChunks + xPos; x++) {
             for (int z = zPos; z < 16*WinChunks + zPos; z++) {
+
+                float typeTerrain = PerlinNoise(x * 0.01f * 1.5346 + 0.3246, z * 0.01f * 1.5346 + 0.8756);
+
                 float noise = PerlinNoise(0.1 * x * 0.6237f, 0.25 * z * 0.5663f);
 
                 if (y <= 128) {
                     setGlobalBlockAt(x, y, z, GRASS);
                 } else if (y == 129) {
-                    if(noise >= (0.5)) {
-                        setGlobalBlockAt(x, y, z, GRASS);
+                    if (typeTerrain < 0.5) {
+                        if(noise >= (0.5)) {
+                            setGlobalBlockAt(x, y, z, GRASS);
+                        }
+                    } else {
+                         setGlobalBlockAt(x, y, z, STONE);
                     }
                 }
                 else {
-                    if(getGlobalBlockAt(x, y-1, z) != EMPTY) {
-                        float rand = PerlinNoise(x * 0.02f  * 0.6678f + 537.6523f, z * 0.02f * 0.6734f + 5272.545f);
+                    if (typeTerrain < 0.5) {
 
-                        rand -= glm::max(noise * 0.5f, 0.0f);
+                        if(getGlobalBlockAt(x, y-1, z) != EMPTY) {
+                            float rand = PerlinNoise(x * 0.02f  * 0.6678f + 537.6523f, z * 0.02f * 0.6734f + 5272.545f);
 
-                        if (rand < 0.5 - 0.2f * (y - 128)) {
-                            setGlobalBlockAt(x, y, z, GRASS);
+                            rand -= glm::max(noise * 0.5f, 0.0f);
+
+                            if (rand < 0.5 - 0.2f * (y - 128)) {
+                                setGlobalBlockAt(x, y, z, GRASS);
+                            }
+                        }
+                    } else {
+                        if(getGlobalBlockAt(x, y-1, z) != EMPTY) {
+                            float rand = noise - (y-130) * 0.1;
+
+                            if (rand > 0.1) {
+                                setGlobalBlockAt(x, y, z, STONE);
+                            }
                         }
                     }
+
                 }
             }
         }
@@ -343,7 +362,7 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
         for (int i = xPos; i < 16*WinChunks + xPos; i++) {
             for (int j = zPos; j < 16*WinChunks + zPos; j++) {
                 if (newPoints[i - xPos][j - zPos]) {
-                    setGlobalBlockAt(i, y, j, GRASS);
+                    setGlobalBlockAt(i, y, j, getGlobalBlockAt(i-1, y, j));
                 }
             }
         }
@@ -355,12 +374,20 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
             for (int z = zPos; z < 16*WinChunks + zPos; z++) {
                 if(getGlobalBlockAt(x, y, z) == EMPTY) {
                     continue;
-                }
-
-                if(getGlobalBlockAt(x, y+1, z) == EMPTY || y == 255) {
-                    setGlobalBlockAt(x, y, z, GRASS);
+                } else if (getGlobalBlockAt(x, y, z) == GRASS) {
+                    if(getGlobalBlockAt(x, y+1, z) == EMPTY || y == 255) {
+                        setGlobalBlockAt(x, y, z, GRASS);
+                    }
+                    else {
+                        setGlobalBlockAt(x, y, z, STONE);
+                    }
                 } else {
-                    setGlobalBlockAt(x, y, z, STONE);
+                    if(getGlobalBlockAt(x, y+1, z) == EMPTY || y == 255) {
+                        setGlobalBlockAt(x, y, z, SNOW);
+                    }
+                    else {
+                        setGlobalBlockAt(x, y, z, STONE);
+                    }
                 }
             }
         }

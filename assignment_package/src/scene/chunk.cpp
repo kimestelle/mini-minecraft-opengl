@@ -47,6 +47,7 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
     case DIRT:  color = glm::vec4(0.47f, 0.33f, 0.23f, 1.0f); break;
     case STONE: color = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f); break;
     case WATER: color = glm::vec4(0.0f, 0.0f, 0.75f, 0.7f); break;
+    case SNOW: color = glm::vec4(1.0, 1.0, 1.0, 1.0f); break;
     default:    color = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
     // case GRASS: color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); break;
     // case DIRT:  color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); break;
