@@ -102,6 +102,8 @@ void MyGL::tick() {
     m_inputs.mouseX = 0;
     m_inputs.mouseY = 0;
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
+    //check terrain expansion
+    m_terrain.expandTerrainIfNeeded(m_player.mcr_position);
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
 }
 
@@ -123,9 +125,12 @@ void MyGL::sendPlayerDataToGUI() const {
 void MyGL::paintGL() {
     // Clear the screen so that we only see newly drawn images
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
 
     glm::mat4 viewproj = m_player.mcr_camera.getViewProj();
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
+    m_progLambert.setUnifMat4("u_Model", glm::mat4());
+    m_progLambert.setUnifMat4("u_ModelInvTr", glm::mat4());
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
 
@@ -140,8 +145,8 @@ void MyGL::paintGL() {
 // TODO: Change this so it renders the nine zones of generated
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
-void MyGL::renderTerrain() {
-    m_terrain.draw(0, 64, 0, 64, &m_progInstanced);
+void MyGL::renderTerrain() {;
+    m_terrain.draw(0, 64, 0, 64, &m_progLambert);
 }
 
 

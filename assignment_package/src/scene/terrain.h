@@ -50,7 +50,6 @@ private:
     // for every non-EMPTY block within its Chunks. This is horribly
     // inefficient, and will cause your game to run very slowly until
     // milestone 1's Chunk VBO setup is completed.
-    Cube m_geomCube;
 
     // Set this to "true" whenever you modify the blocks
     // in your terrain. NOT NEEDED ONCE MILESTONE 1's CHUNKING
@@ -95,4 +94,6 @@ public:
     void CreateTestScene();
 
     void GenerateTerrain();
+    //expand terrain
+    void expandTerrainIfNeeded(const glm::vec3 &playerPos);
 };
