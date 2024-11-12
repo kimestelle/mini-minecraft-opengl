@@ -66,8 +66,15 @@ void MyGL::initializeGL()
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
     glBindVertexArray(vao);
+    int terrainBlock = 1;
 
-    m_terrain.GenerateTerrain();
+    // for(int i = -2; i <= 2; i++) {
+    //     for(int j = -2; j <= 2; j++) {
+            std::cout << "Generating Terrain Region " << terrainBlock << "/25" << std::endl;
+            m_terrain.GenerateTerrain(0 * 64, 0 * 64);
+    //         terrainBlock++;
+    //     }
+    // }
 }
 
 
@@ -103,7 +110,7 @@ void MyGL::tick() {
     m_inputs.mouseY = 0;
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
     //check terrain expansion
-    m_terrain.expandTerrainIfNeeded(m_player.mcr_position);
+    // m_terrain.expandTerrainIfNeeded(m_player.mcr_position);
     sendPlayerDataToGUI(); // Updates the info in the secondary window displaying player data
 }
 
@@ -145,8 +152,21 @@ void MyGL::paintGL() {
 // TODO: Change this so it renders the nine zones of generated
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
-void MyGL::renderTerrain() {;
-    m_terrain.draw(0, 64, 0, 64, &m_progLambert);
+void MyGL::renderTerrain() {
+    int x = m_player.mcr_position.x- ((int)m_player.mcr_position.x % 64) + 32;
+    int z = m_player.mcr_position.z- ((int)m_player.mcr_position.z % 64) + 32;
+
+    // for(int i = -1; i <= 1; i++) {
+    //     for(int j = -1; j <= 1; j++) {
+    //         int xCoord = x - 32 + i * 64;
+    //         int zCoord = z - 32 + j * 64;
+
+    //         // m_terrain.GenerateTerrain(xCoord, zCoord);
+    //     }
+    // }
+
+    m_terrain.draw( x - 64, x + 64, z-64, z+64, &m_progLambert);
+
 }
 
 
@@ -269,6 +289,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         if (m_terrain.hasChunkAt(currPos.x, currPos.z) && m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z) != EMPTY) {
             switch (e->button()) {
                 case Qt::LeftButton:
+                std::cout << "remove block" << std::endl;
                     m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
                     break;
                 case Qt::RightButton:

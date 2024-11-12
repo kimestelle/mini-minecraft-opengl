@@ -67,7 +67,7 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
     for (int i = 0; i < 4; ++i) {
         interleavedData.push_back(glm::vec4(minX, 0, minZ, 0) + pos + vertices[i]);
         interleavedData.push_back(color);
-        interleavedData.push_back(glm::vec4());
+        interleavedData.push_back(glm::normalize(glm::vec4(glm::cross(glm::vec3(vertices[1] - vertices[0]), glm::vec3(vertices[2] - vertices[1])), 0)));
     }
     indices.push_back(vC + 0);
     indices.push_back(vC + 1);
@@ -88,7 +88,7 @@ void Chunk::generateVBOData() {
     for (int x = 0; x < 16; ++x) {
         for (int y = 0; y < 256; ++y) {
             if (y == 128) {
-                std::cout << y << std::endl;
+                // std::cout << y << std::endl;
             }
             for (int z = 0; z < 16; ++z) {
                 BlockType t = getLocalBlockAt(x, y, z);
@@ -112,24 +112,24 @@ void Chunk::generateVBOData() {
             }
         }
     }
-        std::cout << "debug: face count: " << faceCount << std::endl;
-        std::cout << "debug: vertex count: " << vertexCount << std::endl;
+        // std::cout << "debug: face count: " << faceCount << std::endl;
+        // std::cout << "debug: vertex count: " << vertexCount << std::endl;
 
     generateBuffer(INTERLEAVED);
     generateBuffer(INDEX);
 
     if (bindBuffer(INTERLEAVED)) {
-        std::cout << "debug: interleaved buffer created" << std::endl;
+        // std::cout << "debug: interleaved buffer created" << std::endl;
         mp_context->glBufferData(GL_ARRAY_BUFFER, interleavedData.size() * sizeof(glm::vec4), interleavedData.data(), GL_STATIC_DRAW);
 
     }
 
     if (bindBuffer(INDEX)) {
-        std::cout << "debug: index buffer created"  << std::endl;
+        // std::cout << "debug: index buffer created"  << std::endl;
         mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), indices.data(), GL_STATIC_DRAW);
     }
 
-    std::cout << "debug: 1 index count " << this->elemCount(INDEX) << std::endl;
+    // std::cout << "debug: 1 index count " << this->elemCount(INDEX) << std::endl;
 
 
     if (!indices.empty()) {
@@ -145,8 +145,8 @@ void Chunk::generateVBOData() {
 
     }
 
-    std::cout << "debug: interleaved count " << this->elemCount(INTERLEAVED) << std::endl;
-    std::cout << "debug: 2 index count " << this->elemCount(INDEX) << std::endl;
+    // std::cout << "debug: interleaved count " << this->elemCount(INTERLEAVED) << std::endl;
+    // std::cout << "debug: 2 index count " << this->elemCount(INDEX) << std::endl;
 
 
 }

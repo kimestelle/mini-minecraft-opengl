@@ -93,7 +93,7 @@ public:
     // see when the base code is run.
     void CreateTestScene();
 
-    void GenerateTerrain();
+    void GenerateTerrain(int x, int z);
     //expand terrain
     void expandTerrainIfNeeded(const glm::vec3 &playerPos);
 };

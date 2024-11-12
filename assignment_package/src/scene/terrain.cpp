@@ -148,19 +148,34 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
 // TODO: When you make Chunk inherit from Drawable, change this code so
 // it draws each Chunk with the given ShaderProgram
 void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram) {
-    for (int x = minX; x < maxX; x += 16) {
-        for (int z = minZ; z < maxZ; z += 16) {
-            if (hasChunkAt(x, z)) {
-                const uPtr<Chunk>& chunk = getChunkAt(x, z);
-                // std::cout << "debug: drawing chunk at (" << x << ", " << z << ") with element count: " << chunk->elemCount(INDEX) << std::endl;
-                if (chunk->elemCount(INDEX) > 0) {
-                    shaderProgram->drawInterleaved(*chunk);
-                    std::cout << "index count @ terrain: " << chunk->elemCount(INDEX) << std::endl;
-                    std::cout << "int count @ terrain: " << chunk->elemCount(INTERLEAVED) << std::endl;
+        if(m_chunkVBOsNeedUpdating) {
+            for (int x = minX; x < maxX; x += 16) {
+                for (int z = minZ; z < maxZ; z += 16) {
+                    if (hasChunkAt(x, z)) {
+                        getChunkAt(x, z)->generateVBOData();
+                    }
+                }
+            }
+            m_chunkVBOsNeedUpdating = false;
+        }
+
+        for (int x = minX; x < maxX; x += 16) {
+            for (int z = minZ; z < maxZ; z += 16) {
+                if (hasChunkAt(x, z)) {
+                    const uPtr<Chunk>& chunk = getChunkAt(x, z);
+                    if(m_chunkVBOsNeedUpdating) {
+                        chunk->generateVBOData();
+                    }
+                    // std::cout << "debug: drawing chunk at (" << x << ", " << z << ") with element count: " << chunk->elemCount(INDEX) << std::endl;
+                    if (chunk->elemCount(INDEX) > 0) {
+                        shaderProgram->drawInterleaved(*chunk);
+                        // std::cout << "index count @ terrain: " << chunk->elemCount(INDEX) << std::endl;
+                        // std::cout << "int count @ terrain: " << chunk->elemCount(INTERLEAVED) << std::endl;
+                    }
+
                 }
             }
         }
-    }
 }
 void Terrain::CreateTestScene()
 {
@@ -219,17 +234,28 @@ void Terrain::CreateTestScene()
 
 //function to expand terrain based on player position
 void Terrain::expandTerrainIfNeeded(const glm::vec3 &playerPos) {
-    int xChunk = static_cast<int>(glm::floor(playerPos.x / 16.f)) * 16;
-    int zChunk = static_cast<int>(glm::floor(playerPos.z / 16.f)) * 16;
+    int xCenter = ((int)playerPos.x) - ((int)playerPos.x % 16);
+    int zCenter = ((int)playerPos.z) - ((int)playerPos.z % 16);
 
-    std::vector<std::pair<int, int>> directions = {
-        {xChunk + 16, zChunk}, {xChunk - 16, zChunk},
-        {xChunk, zChunk + 16}, {xChunk, zChunk - 16}
-    };
+    for(int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            if(!hasChunkAt(xCenter + i * 16, zCenter + j * 16)) {
+                // std::cout << "expanding Terrain" << std::endl;
+                instantiateChunkAt(xCenter + i * 16, zCenter + j * 16);
+            }
+        }
+    }
 
-    for (const auto &dir : directions) {
-        if (!hasChunkAt(dir.first, dir.second)) {
-            instantiateChunkAt(dir.first, dir.second);
+    xCenter = ((int)playerPos.x) - ((int)playerPos.x % 64);
+    zCenter = ((int)playerPos.z) - ((int)playerPos.z % 64);
+
+    for(int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            int c = m_generatedTerrain.count(toKey(xCenter + 64*i, zCenter + 64 * j));
+            if (c == 0) {
+                // std::cout << "expanding generation" << std::endl;
+                m_generatedTerrain.insert(toKey(xCenter + 64*i, zCenter + 64 * j));
+            }
         }
     }
 }
@@ -238,44 +264,47 @@ void Terrain::expandTerrainIfNeeded(const glm::vec3 &playerPos) {
 float PerlinNoise(float x, float y);
 
 
-void Terrain::GenerateTerrain()  {
+void Terrain::GenerateTerrain(int xPos, int zPos)  {
+
+    if(m_generatedTerrain.count(toKey(xPos, zPos)) > 0) {
+        return;
+    }
+
+    int WinChunks = 4;
 
     // Create the Chunks that will
     // store the blocks for our
     // initial world space
-    for(int x = 0; x < 64; x += 16) {
-        for(int z = 0; z < 64; z += 16) {
+    for(int x = xPos; x < 16*WinChunks + xPos; x += 16) {
+        for(int z = zPos; z < 16*WinChunks + zPos; z += 16) {
             instantiateChunkAt(x, z);
         }
     }
     // Tell our existing terrain set that
     // the "generated terrain zone" at (0,0)
     // now exists.
-    m_generatedTerrain.insert(toKey(0, 0));
-
-    setGlobalBlockAt(0, 128, 0, GRASS);
-
+    m_generatedTerrain.insert(toKey(xPos, zPos));
 
     // Create the basic terrain floor
     for(int y = 0; y < 256; y++) {
-        for (int x = 0; x < 64; x++) {
-            for (int z = 0; z < 64; z++) {
-                float noise = PerlinNoise(0.25 * x * 0.6237f, 0.25 * z * 0.5663f);
+        for (int x = xPos; x < 16*WinChunks + xPos; x++) {
+            for (int z = zPos; z < 16*WinChunks + zPos; z++) {
+                float noise = PerlinNoise(0.1 * x * 0.6237f, 0.25 * z * 0.5663f);
 
                 if (y <= 128) {
                     setGlobalBlockAt(x, y, z, GRASS);
                 } else if (y == 129) {
-                    if(noise >= (0.2 + (y - 128) * 0.1)) {
+                    if(noise >= (0.5)) {
                         setGlobalBlockAt(x, y, z, GRASS);
                     }
                 }
                 else {
                     if(getGlobalBlockAt(x, y-1, z) != EMPTY) {
-                        float rand = PerlinNoise(x * 0.15f  * 0.6678f + 537.6523f, (y - 128) * 0.15f * 0.6734f + 5272.545f);
+                        float rand = PerlinNoise(x * 0.02f  * 0.6678f + 537.6523f, z * 0.02f * 0.6734f + 5272.545f);
 
                         rand -= glm::max(noise * 0.5f, 0.0f);
 
-                        if (rand < 0.8 - 0.1f * (y - 128)) {
+                        if (rand < 0.5 - 0.2f * (y - 128)) {
                             setGlobalBlockAt(x, y, z, GRASS);
                         }
                     }
@@ -283,17 +312,17 @@ void Terrain::GenerateTerrain()  {
             }
         }
 
-        std::vector<std::vector<bool>> newPoints(64);
+        std::vector<std::vector<bool>> newPoints(16*WinChunks);
 
         for(int i = 0; i < newPoints.size(); i++) {
-            newPoints[i] = std::vector<bool>(64);
+            newPoints[i] = std::vector<bool>(16*WinChunks);
         }
 
-        for (int i = 0; i < 64; i++) {
-            for (int j = 0; j < 64; j++) {
+        for (int i = xPos; i < 16*WinChunks + xPos; i++) {
+            for (int j = zPos; j < 16*WinChunks + zPos; j++) {
                 int numNeighbors = 0;
 
-                if (getGlobalBlockAt(i, y, j) == EMPTY && i > 0 && i < 63 && j > 0 && j < 63) {
+                if (getGlobalBlockAt(i, y, j) == EMPTY && i > 0 && i < 16*WinChunks - 1 && j > 0 && j < 16*WinChunks - 1) {
 
                     numNeighbors += getGlobalBlockAt(i, y, j-1) != EMPTY ? 1 : 0;
                     numNeighbors += getGlobalBlockAt(i, y, j+1) != EMPTY ? 1 : 0;
@@ -302,18 +331,18 @@ void Terrain::GenerateTerrain()  {
 
                     float probability = 0.235f * numNeighbors;
 
-                    float first = PerlinNoise(i * 0.15f * 12.3358f + 2543537.6523f, j * 0.15f * 13.654f + 544523.3644f);
+                    float first = PerlinNoise(i * 0.20f * 12.3358f + 2543537.6523f, j * 0.20f * 13.654f + 544523.3644f);
 
                     if (first < probability) {
-                        newPoints[i][j] = true;
+                        newPoints[i - xPos][j - zPos] = true;
                     }
                 }
             }
         }
 
-        for (int i = 0; i < 64; i++) {
-            for (int j = 0; j < 64; j++) {
-                if (newPoints[i][j]) {
+        for (int i = xPos; i < 16*WinChunks + xPos; i++) {
+            for (int j = zPos; j < 16*WinChunks + zPos; j++) {
+                if (newPoints[i - xPos][j - zPos]) {
                     setGlobalBlockAt(i, y, j, GRASS);
                 }
             }
@@ -322,8 +351,8 @@ void Terrain::GenerateTerrain()  {
 
 
     for(int y = 0; y < 255; y++) {
-        for (int x = 0; x < 64; x++) {
-            for (int z = 0; z < 64; z++) {
+        for (int x = xPos; x < 16*WinChunks + xPos; x++) {
+            for (int z = zPos; z < 16*WinChunks + zPos; z++) {
                 if(getGlobalBlockAt(x, y, z) == EMPTY) {
                     continue;
                 }
@@ -337,8 +366,8 @@ void Terrain::GenerateTerrain()  {
         }
     }
 
-    for(int x = 0; x < 64; x += 16) {
-        for(int z = 0; z < 64; z += 16) {
+    for(int x = xPos; x < 16*WinChunks + xPos; x += 16) {
+        for(int z = zPos; z < 16*WinChunks + zPos; z += 16) {
             getChunkAt(x, z)->createVBOdata();
         }
     }
