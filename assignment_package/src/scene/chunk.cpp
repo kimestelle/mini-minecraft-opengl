@@ -43,16 +43,16 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
     glm::vec4 color;
 
     switch(t) {
-    // case GRASS: color = glm::vec4(0.37f, 0.62f, 0.21f, 1.0f); break;
-    // case DIRT:  color = glm::vec4(0.47f, 0.33f, 0.23f, 1.0f); break;
-    // case STONE: color = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f); break;
-    // case WATER: color = glm::vec4(0.0f, 0.0f, 0.75f, 0.7f); break;
-    // default:    color = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
-    case GRASS: color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); break;
-    case DIRT:  color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); break;
-    case STONE: color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); break;
-    case WATER: color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); break;
-    default:    color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    case GRASS: color = glm::vec4(0.37f, 0.62f, 0.21f, 1.0f); break;
+    case DIRT:  color = glm::vec4(0.47f, 0.33f, 0.23f, 1.0f); break;
+    case STONE: color = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f); break;
+    case WATER: color = glm::vec4(0.0f, 0.0f, 0.75f, 0.7f); break;
+    default:    color = glm::vec4(1.0f, 0.0f, 1.0f, 1.0f);
+    // case GRASS: color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); break;
+    // case DIRT:  color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); break;
+    // case STONE: color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); break;
+    // case WATER: color = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f); break;
+    // default:    color = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
     }
 
     switch (dir) {
@@ -65,7 +65,7 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
     }
 
     for (int i = 0; i < 4; ++i) {
-        interleavedData.push_back(pos + vertices[i]);
+        interleavedData.push_back(glm::vec4(minX, 0, minZ, 0) + pos + vertices[i]);
         interleavedData.push_back(color);
         interleavedData.push_back(glm::vec4());
     }

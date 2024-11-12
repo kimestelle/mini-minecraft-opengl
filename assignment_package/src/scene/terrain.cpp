@@ -239,8 +239,6 @@ float PerlinNoise(float x, float y);
 
 
 void Terrain::GenerateTerrain()  {
-    // TODO: DELETE THIS LINE WHEN YOU DELETE m_geomCube!
-    m_geomCube.createVBOdata();
 
     // Create the Chunks that will
     // store the blocks for our
@@ -258,86 +256,92 @@ void Terrain::GenerateTerrain()  {
     setGlobalBlockAt(0, 128, 0, GRASS);
 
 
-    // // Create the basic terrain floor
-    // for(int y = 0; y < 256; y++) {
-    //     for (int x = 0; x < 64; x++) {
-    //         for (int z = 0; z < 64; z++) {
-    //             float noise = PerlinNoise(0.25 * x * 0.6237f, 0.25 * z * 0.5663f);
+    // Create the basic terrain floor
+    for(int y = 0; y < 256; y++) {
+        for (int x = 0; x < 64; x++) {
+            for (int z = 0; z < 64; z++) {
+                float noise = PerlinNoise(0.25 * x * 0.6237f, 0.25 * z * 0.5663f);
 
-    //             if (y <= 128) {
-    //                 setGlobalBlockAt(x, y, z, GRASS);
-    //             } else if (y == 129) {
-    //                 if(noise >= (0.2 + (y - 128) * 0.1)) {
-    //                     setGlobalBlockAt(x, y, z, GRASS);
-    //                 }
-    //             }
-    //             else {
-    //                 if(getGlobalBlockAt(x, y-1, z) != EMPTY) {
-    //                     float rand = PerlinNoise(x * 0.15f  * 0.6678f + 537.6523f, (y - 128) * 0.15f * 0.6734f + 5272.545f);
+                if (y <= 128) {
+                    setGlobalBlockAt(x, y, z, GRASS);
+                } else if (y == 129) {
+                    if(noise >= (0.2 + (y - 128) * 0.1)) {
+                        setGlobalBlockAt(x, y, z, GRASS);
+                    }
+                }
+                else {
+                    if(getGlobalBlockAt(x, y-1, z) != EMPTY) {
+                        float rand = PerlinNoise(x * 0.15f  * 0.6678f + 537.6523f, (y - 128) * 0.15f * 0.6734f + 5272.545f);
 
-    //                     rand -= glm::max(noise * 0.5f, 0.0f);
+                        rand -= glm::max(noise * 0.5f, 0.0f);
 
-    //                     if (rand < 0.8 - 0.1f * (y - 128)) {
-    //                         setGlobalBlockAt(x, y, z, GRASS);
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
+                        if (rand < 0.8 - 0.1f * (y - 128)) {
+                            setGlobalBlockAt(x, y, z, GRASS);
+                        }
+                    }
+                }
+            }
+        }
 
-    //     std::vector<std::vector<bool>> newPoints(64);
+        std::vector<std::vector<bool>> newPoints(64);
 
-    //     for(int i = 0; i < newPoints.size(); i++) {
-    //         newPoints[i] = std::vector<bool>(64);
-    //     }
+        for(int i = 0; i < newPoints.size(); i++) {
+            newPoints[i] = std::vector<bool>(64);
+        }
 
-    //     for (int i = 0; i < 64; i++) {
-    //         for (int j = 0; j < 64; j++) {
-    //             int numNeighbors = 0;
+        for (int i = 0; i < 64; i++) {
+            for (int j = 0; j < 64; j++) {
+                int numNeighbors = 0;
 
-    //             if (getGlobalBlockAt(i, y, j) == EMPTY && i > 0 && i < 63 && j > 0 && j < 63) {
+                if (getGlobalBlockAt(i, y, j) == EMPTY && i > 0 && i < 63 && j > 0 && j < 63) {
 
-    //                 numNeighbors += getGlobalBlockAt(i, y, j-1) != EMPTY ? 1 : 0;
-    //                 numNeighbors += getGlobalBlockAt(i, y, j+1) != EMPTY ? 1 : 0;
-    //                 numNeighbors += getGlobalBlockAt(i-1, y, j) != EMPTY ? 1 : 0;
-    //                 numNeighbors += getGlobalBlockAt(i+1, y, j) != EMPTY ? 1 : 0;
+                    numNeighbors += getGlobalBlockAt(i, y, j-1) != EMPTY ? 1 : 0;
+                    numNeighbors += getGlobalBlockAt(i, y, j+1) != EMPTY ? 1 : 0;
+                    numNeighbors += getGlobalBlockAt(i-1, y, j) != EMPTY ? 1 : 0;
+                    numNeighbors += getGlobalBlockAt(i+1, y, j) != EMPTY ? 1 : 0;
 
-    //                 float probability = 0.235f * numNeighbors;
+                    float probability = 0.235f * numNeighbors;
 
-    //                 float first = PerlinNoise(i * 0.15f * 12.3358f + 2543537.6523f, j * 0.15f * 13.654f + 544523.3644f);
+                    float first = PerlinNoise(i * 0.15f * 12.3358f + 2543537.6523f, j * 0.15f * 13.654f + 544523.3644f);
 
-    //                 if (first < probability) {
-    //                     newPoints[i][j] = true;
-    //                 }
-    //             }
-    //         }
-    //     }
+                    if (first < probability) {
+                        newPoints[i][j] = true;
+                    }
+                }
+            }
+        }
 
-    //     for (int i = 0; i < 64; i++) {
-    //         for (int j = 0; j < 64; j++) {
-    //             if (newPoints[i][j]) {
-    //                 setGlobalBlockAt(i, y, j, GRASS);
-    //             }
-    //         }
-    //     }
-    // }
+        for (int i = 0; i < 64; i++) {
+            for (int j = 0; j < 64; j++) {
+                if (newPoints[i][j]) {
+                    setGlobalBlockAt(i, y, j, GRASS);
+                }
+            }
+        }
+    }
 
 
-    // for(int y = 0; y < 255; y++) {
-    //     for (int x = 0; x < 64; x++) {
-    //         for (int z = 0; z < 64; z++) {
-    //             if(getGlobalBlockAt(x, y, z) == EMPTY) {
-    //                 continue;
-    //             }
+    for(int y = 0; y < 255; y++) {
+        for (int x = 0; x < 64; x++) {
+            for (int z = 0; z < 64; z++) {
+                if(getGlobalBlockAt(x, y, z) == EMPTY) {
+                    continue;
+                }
 
-    //             if(getGlobalBlockAt(x, y+1, z) == EMPTY || y == 255) {
-    //                 setGlobalBlockAt(x, y, z, GRASS);
-    //             } else {
-    //                 setGlobalBlockAt(x, y, z, STONE);
-    //             }
-    //         }
-    //     }
-    // }
+                if(getGlobalBlockAt(x, y+1, z) == EMPTY || y == 255) {
+                    setGlobalBlockAt(x, y, z, GRASS);
+                } else {
+                    setGlobalBlockAt(x, y, z, STONE);
+                }
+            }
+        }
+    }
+
+    for(int x = 0; x < 64; x += 16) {
+        for(int z = 0; z < 64; z += 16) {
+            getChunkAt(x, z)->createVBOdata();
+        }
+    }
 }
 
 
