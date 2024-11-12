@@ -114,17 +114,19 @@ void MyGL::sendPlayerDataToGUI() const {
 void MyGL::paintGL() {
     // Clear the screen so that we only see newly drawn images
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
 
     glm::mat4 viewproj = m_player.mcr_camera.getViewProj();
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
+    m_progLambert.setUnifMat4("u_Model", glm::mat4());
+    m_progLambert.setUnifMat4("u_ModelInvTr", glm::mat4());
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
+
     renderTerrain();
 
     glDisable(GL_DEPTH_TEST);
     m_progFlat.setUnifMat4("u_Model", glm::mat4());
-    m_progLambert.setUnifMat4("u_Model", glm::mat4());
-    m_progLambert.setUnifMat4("u_ModelInvTr", glm::mat4());
     m_progFlat.draw(m_worldAxes);
     glEnable(GL_DEPTH_TEST);
 }
@@ -132,7 +134,7 @@ void MyGL::paintGL() {
 // TODO: Change this so it renders the nine zones of generated
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
-void MyGL::renderTerrain() {
+void MyGL::renderTerrain() {;
     m_terrain.draw(0, 64, 0, 64, &m_progLambert);
 }
 

@@ -56,12 +56,12 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
     }
 
     switch (dir) {
-    case XPOS: vertices[0] = glm::vec4(1, 0, 0, 0); vertices[1] = glm::vec4(1, 1, 0, 0); vertices[2] = glm::vec4(1, 1, 1, 1); vertices[3] = glm::vec4(1, 0, 1, 0); break;
-    case XNEG: vertices[0] = glm::vec4(0, 0, 0, 0); vertices[1] = glm::vec4(0, 1, 0, 0); vertices[2] = glm::vec4(0, 1, 1, 1); vertices[3] = glm::vec4(0, 0, 1, 0); break;
-    case YPOS: vertices[0] = glm::vec4(0, 1, 0, 0); vertices[1] = glm::vec4(1, 1, 0, 0); vertices[2] = glm::vec4(1, 1, 1, 1); vertices[3] = glm::vec4(0, 1, 1, 0); break;
-    case YNEG: vertices[0] = glm::vec4(0, 0, 0, 0); vertices[1] = glm::vec4(1, 0, 0, 0); vertices[2] = glm::vec4(1, 0, 1, 1); vertices[3] = glm::vec4(0, 0, 1, 0); break;
-    case ZPOS: vertices[0] = glm::vec4(0, 0, 1, 0); vertices[1] = glm::vec4(1, 0, 1, 0); vertices[2] = glm::vec4(1, 1, 1, 1); vertices[3] = glm::vec4(0, 1, 1, 0); break;
-    case ZNEG: vertices[0] = glm::vec4(0, 0, 0, 0); vertices[1] = glm::vec4(1, 0, 0, 0); vertices[2] = glm::vec4(1, 1, 0, 1); vertices[3] = glm::vec4(0, 1, 0, 0); break;
+    case XPOS: vertices[0] = glm::vec4(1, 0, 0, 1); vertices[1] = glm::vec4(1, 1, 0, 1); vertices[2] = glm::vec4(1, 1, 1, 1); vertices[3] = glm::vec4(1, 0, 1, 1); break;
+    case XNEG: vertices[0] = glm::vec4(0, 0, 0, 1); vertices[1] = glm::vec4(0, 1, 0, 1); vertices[2] = glm::vec4(0, 1, 1, 1); vertices[3] = glm::vec4(0, 0, 1, 1); break;
+    case YPOS: vertices[0] = glm::vec4(0, 1, 0, 1); vertices[1] = glm::vec4(1, 1, 0, 1); vertices[2] = glm::vec4(1, 1, 1, 1); vertices[3] = glm::vec4(0, 1, 1, 1); break;
+    case YNEG: vertices[0] = glm::vec4(0, 0, 0, 1); vertices[1] = glm::vec4(1, 0, 0, 1); vertices[2] = glm::vec4(1, 0, 1, 1); vertices[3] = glm::vec4(0, 0, 1, 1); break;
+    case ZPOS: vertices[0] = glm::vec4(0, 0, 1, 1); vertices[1] = glm::vec4(1, 0, 1, 1); vertices[2] = glm::vec4(1, 1, 1, 1); vertices[3] = glm::vec4(0, 1, 1, 1); break;
+    case ZNEG: vertices[0] = glm::vec4(0, 0, 0, 1); vertices[1] = glm::vec4(1, 0, 0, 1); vertices[2] = glm::vec4(1, 1, 0, 1); vertices[3] = glm::vec4(0, 1, 0, 1); break;
     }
 
     for (int i = 0; i < 4; ++i) {

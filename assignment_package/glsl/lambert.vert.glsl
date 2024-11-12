@@ -38,21 +38,21 @@ const vec4 lightDir = normalize(vec4(0.5, 1, 0.75, 0));  // The direction of our
 
 void main()
 {
-    // fs_Pos = vs_Pos;
-    // fs_Col = vs_Col;                         // Pass the vertex colors to the fragment shader for interpolation
+    fs_Pos = vs_Pos;
+    fs_Col = vs_Col;                         // Pass the vertex colors to the fragment shader for interpolation
 
-    // mat3 invTranspose = mat3(u_ModelInvTr);
-    // fs_Nor = vec4(invTranspose * vec3(vs_Nor), 0);          // Pass the vertex normals to the fragment shader for interpolation.
-    //                                                         // Transform the geometry's normals by the inverse transpose of the
-    //                                                         // model matrix. This is necessary to ensure the normals remain
-    //                                                         // perpendicular to the surface after the surface is transformed by
-    //                                                         // the model matrix.
+    mat3 invTranspose = mat3(u_ModelInvTr);
+    fs_Nor = vec4(invTranspose * vec3(vs_Nor), 0);          // Pass the vertex normals to the fragment shader for interpolation.
+                                                            // Transform the geometry's normals by the inverse transpose of the
+                                                            // model matrix. This is necessary to ensure the normals remain
+                                                            // perpendicular to the surface after the surface is transformed by
+                                                            // the model matrix.
 
 
-    // vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
+    vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
 
-    // fs_LightVec = (lightDir);  // Compute the direction in which the light source lies
+    fs_LightVec = (lightDir);  // Compute the direction in which the light source lies
 
-    gl_Position = u_ViewProj * vs_Pos;// gl_Position is a built-in variable of OpenGL which is
+    gl_Position = u_ViewProj * modelposition;// gl_Position is a built-in variable of OpenGL which is
                                              // used to render the final positions of the geometry's vertices
 }
