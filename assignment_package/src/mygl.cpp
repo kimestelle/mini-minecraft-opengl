@@ -68,13 +68,13 @@ void MyGL::initializeGL()
     glBindVertexArray(vao);
     int terrainBlock = 1;
 
-    // for(int i = -2; i <= 2; i++) {
-    //     for(int j = -2; j <= 2; j++) {
+    for(int i = -2; i <= 2; i++) {
+        for(int j = -2; j <= 2; j++) {
             std::cout << "Generating Terrain Region " << terrainBlock << "/25" << std::endl;
-            m_terrain.GenerateTerrain(0 * 64, 0 * 64);
-    //         terrainBlock++;
-    //     }
-    // }
+            m_terrain.GenerateTerrain(i * 64, j * 64);
+            terrainBlock++;
+        }
+    }
 }
 
 
