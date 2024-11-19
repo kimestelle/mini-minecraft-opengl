@@ -7,6 +7,7 @@
 #include "scene/camera.h"
 #include "scene/terrain.h"
 #include "scene/player.h"
+#include "texture.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
@@ -25,9 +26,12 @@ private:
     GLuint vao; // A handle for our vertex array object. This will store the VBOs created in our geometry classes.
                 // Don't worry too much about this. Just know it is necessary in order to render geometry.
 
+    Texture m_texture;
+
     Terrain m_terrain; // All of the Chunks that currently comprise the world.
     Player m_player; // The entity controlled by the user. Contains a camera to display what it sees as well.
     InputBundle m_inputs; // A collection of variables to be updated in keyPressEvent, mouseMoveEvent, mousePressEvent, etc.
+
 
     QTimer m_timer; // Timer linked to tick(). Fires approximately 60 times per second.
 

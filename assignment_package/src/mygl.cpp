@@ -5,12 +5,13 @@
 #include <QApplication>
 #include <QKeyEvent>
 #include <QDateTime>
+#include <QFile>
 
 
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
-      m_progLambert(this), m_progFlat(this), m_progInstanced(this),
+      m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_texture(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
       m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch())
 {
@@ -60,7 +61,16 @@ void MyGL::initializeGL()
     m_progLambert.create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
     // Create and set up the flat lighting shader
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
-    m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
+    // m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
+
+
+if (!QFile(":/textures/minecraft_textures_all.png").exists()){
+        std::cerr << "error: tex file not found" << std::endl;
+    } else {
+        m_texture.create(":/textures/minecraft_textures_all.png", GL_RGBA, GL_RGBA);
+    }
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //transparency effect
 
 
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
@@ -145,7 +155,7 @@ void MyGL::paintGL() {
 
     glDisable(GL_DEPTH_TEST);
     m_progFlat.setUnifMat4("u_Model", glm::mat4());
-    m_progFlat.draw(m_worldAxes);
+    m_progFlat.drawOpq(m_worldAxes);
     glEnable(GL_DEPTH_TEST);
 }
 

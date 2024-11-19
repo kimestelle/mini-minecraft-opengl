@@ -16,7 +16,7 @@
 // block types, but in the scope of this project we'll never get anywhere near that many.
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, WATER, SNOW
+    EMPTY, GRASS, DIRT, STONE, WATER, SNOW, LAVA
 };
 
 // The six cardinal directions in 3D space
@@ -56,6 +56,8 @@ private:
 
 public:
     Chunk(int x, int z, OpenGLContext* context);
+    static std::unordered_map<BlockType, glm::vec2> blockUVs;
+    static glm::vec2 getUV(BlockType t, Direction dir);
 
     void create();
     void generateVBOData();

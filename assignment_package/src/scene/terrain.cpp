@@ -159,20 +159,20 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
             m_chunkVBOsNeedUpdating = false;
         }
 
-        for (int x = minX; x < maxX; x += 16) {
-            for (int z = minZ; z < maxZ; z += 16) {
+        for(int x = minX; x < maxX; x += 16) {
+            for(int z = minZ; z < maxZ; z += 16) {
                 if (hasChunkAt(x, z)) {
-                    const uPtr<Chunk>& chunk = getChunkAt(x, z);
-                    if(m_chunkVBOsNeedUpdating) {
-                        chunk->generateVBOData();
-                    }
-                    // std::cout << "debug: drawing chunk at (" << x << ", " << z << ") with element count: " << chunk->elemCount(INDEX) << std::endl;
-                    if (chunk->elemCount(INDEX) > 0) {
-                        shaderProgram->drawInterleaved(*chunk);
-                        // std::cout << "index count @ terrain: " << chunk->elemCount(INDEX) << std::endl;
-                        // std::cout << "int count @ terrain: " << chunk->elemCount(INTERLEAVED) << std::endl;
-                    }
+                    const uPtr<Chunk> &chunk = getChunkAt(x, z);
+                    shaderProgram->drawOpq(*chunk);
+                }
+            }
+        }
 
+        for(int x = minX; x < maxX; x += 16) {
+            for(int z = minZ; z < maxZ; z += 16) {
+                if (hasChunkAt(x, z)) {
+                    const uPtr<Chunk> &chunk = getChunkAt(x, z);
+                    shaderProgram->drawTrans(*chunk);
                 }
             }
         }
