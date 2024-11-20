@@ -30,14 +30,13 @@ void main()
     vec2 uv = fs_UV.xy;
     // Material base color (before shading)
     // vec4 diffuseColor = fs_Col;
-    // if (fs_Col.r == 1.0) { //lava block
-    //     animatedUV.x += sin(u_Time * 2.0) * 0.05;  // horizontal animation
-    // } else if (fs_Col.g == 1.0) { // water block
-    //     animatedUV.y += cos(u_Time * 2.0) * 0.05;  // vertical animation
-    // }
+    if (fs_UV.z == 2.0) { // lava
+        uv.y += mod(u_Time * 0.0007, 1.0 / 16.0);
+    } else if (fs_UV.z == 1.0) { // water
+        uv.x += mod(u_Time * 0.001, 1.0 / 16.0);
+    }
 
     vec4 texColor = texture(u_Texture, uv);
-
 
     // Calculate the diffuse term for Lambert shading
     float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
@@ -50,5 +49,5 @@ void main()
     //lit by our point light are not completely black.
 
     // Compute final shaded color
-    out_Col = vec4(u_Color.rgb * lightIntensity, u_Color.a);
+    out_Col = vec4(texColor.rgb * lightIntensity, texColor.a);
 }

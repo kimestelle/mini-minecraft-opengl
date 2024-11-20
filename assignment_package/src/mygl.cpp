@@ -13,7 +13,7 @@ MyGL::MyGL(QWidget *parent)
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_texture(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
-      m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch())
+    m_inputs(), m_timer(), m_time(0.f), m_lastTime(QDateTime::currentMSecsSinceEpoch())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -118,6 +118,7 @@ void MyGL::tick() {
     m_player.tick(dT, m_inputs); // Player-side tick
     m_inputs.mouseX = 0;
     m_inputs.mouseY = 0;
+    m_progLambert.setUnifFloat("u_Time", m_time);
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
     //check terrain expansion
     // m_terrain.expandTerrainIfNeeded(m_player.mcr_position);
@@ -144,6 +145,7 @@ void MyGL::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
+
     glm::mat4 viewproj = m_player.mcr_camera.getViewProj();
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
     m_progLambert.setUnifMat4("u_Model", glm::mat4());
@@ -151,6 +153,9 @@ void MyGL::paintGL() {
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
 
+    m_progLambert.setUnifFloat("u_Time", m_time++);
+
+    m_texture.bind(0);
     renderTerrain();
 
     glDisable(GL_DEPTH_TEST);

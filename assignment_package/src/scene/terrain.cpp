@@ -218,7 +218,9 @@ void Terrain::CreateTestScene()
     //     setGlobalBlockAt(32, y, 32, GRASS);
     // }
 
-    setGlobalBlockAt(0, 128, 0, GRASS);
+    setGlobalBlockAt(0, 128, 0, WATER);
+    setGlobalBlockAt(1, 128, 0, GRASS);
+
 
     //create vbo data
     for(int x = 0; x < 64; x += 16) {

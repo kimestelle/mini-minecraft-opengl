@@ -22,12 +22,64 @@ void Chunk::setLocalBlockAt(unsigned int x, unsigned int y, unsigned int z, Bloc
 }
 
 std::unordered_map<BlockType, glm::vec2> Chunk::blockUVs = {
-    {GRASS, glm::vec2(3, 0)},
-    {DIRT, glm::vec2(2, 0)},
-    {STONE, glm::vec2(1, 0)},
-    {WATER, glm::vec2(14, 12)},
-    {SNOW, glm::vec2(4, 0)},
-    {LAVA, glm::vec2(14, 14)},
+    {GRASS, glm::vec2(2, 15)},
+    {DIRT, glm::vec2(2, 15)},
+    {STONE, glm::vec2(1, 15)},
+    {WATER, glm::vec2(14, 3)},
+    {SNOW, glm::vec2(2, 11)},
+    {LAVA, glm::vec2(14, 1)},
+    // {BEDROCK, glm::vec2(1, 14)}
+};
+
+std::unordered_map<BlockType, std::unordered_map<Direction, glm::vec2>> blockUVMap = {
+    {GRASS, {
+             {XPOS, glm::vec2(3, 15)},
+             {XNEG, glm::vec2(3, 15)},
+             {YPOS, glm::vec2(8, 13)},
+             {YNEG, glm::vec2(2, 15)},
+             {ZPOS, glm::vec2(3, 15)},
+             {ZNEG, glm::vec2(3, 15)},
+             }},
+    {DIRT, {
+            {XPOS, glm::vec2(2, 15)},
+            {XNEG, glm::vec2(2, 15)},
+            {YPOS, glm::vec2(2, 15)},
+            {YNEG, glm::vec2(2, 15)},
+            {ZPOS, glm::vec2(2, 15)},
+            {ZNEG, glm::vec2(2, 15)},
+            }},
+    {STONE, {
+             {XPOS, glm::vec2(1, 15)},
+             {XNEG, glm::vec2(1, 15)},
+             {YPOS, glm::vec2(1, 15)},
+             {YNEG, glm::vec2(1, 15)},
+             {ZPOS, glm::vec2(1, 15)},
+             {ZNEG, glm::vec2(1, 15)},
+             }},
+    {WATER, {
+             {XPOS, glm::vec2(14, 2)},
+             {XNEG, glm::vec2(14, 2)},
+             {YPOS, glm::vec2(14, 2)},
+             {YNEG, glm::vec2(14, 2)},
+             {ZPOS, glm::vec2(14, 2)},
+             {ZNEG, glm::vec2(14, 2)},
+             }},
+    {SNOW, {
+            {XPOS, glm::vec2(2, 11)},
+            {XNEG, glm::vec2(2, 11)},
+            {YPOS, glm::vec2(2, 11)},
+            {YNEG, glm::vec2(2, 11)},
+            {ZPOS, glm::vec2(2, 11)},
+            {ZNEG, glm::vec2(2, 11)},
+            }},
+    {LAVA, {
+            {XPOS, glm::vec2(14, 1)},
+            {XNEG, glm::vec2(14, 1)},
+            {YPOS, glm::vec2(14, 1)},
+            {YNEG, glm::vec2(14, 1)},
+            {ZPOS, glm::vec2(14, 1)},
+            {ZNEG, glm::vec2(14, 1)},
+            }}
 };
 
 
@@ -49,7 +101,7 @@ void Chunk::linkNeighbor(uPtr<Chunk> &neighbor, Direction dir) {
 
 
 glm::vec2 Chunk::getUV(BlockType t, Direction dir) {
-    glm::vec2 baseUV = blockUVs[t];
+    glm::vec2 baseUV = blockUVMap[t][dir];
     float offset = 0.0625f;
     return baseUV * offset;
 }
@@ -80,13 +132,45 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
         baseUV + glm::vec2(0.0625f, 0)
     };
 
+    if (dir == XPOS) {
+        faceUVs = {
+            baseUV + glm::vec2(0.0625f, 0),
+            baseUV + glm::vec2(0.0625f, 0.0625f),
+            baseUV + glm::vec2(0, 0.0625f),
+            baseUV + glm::vec2(0, 0),
+        };
+    } else if (dir == XNEG) {
+        faceUVs = {
+            baseUV + glm::vec2(0, 0),
+            baseUV + glm::vec2(0, 0.0625f),
+            baseUV + glm::vec2(0.0625f, 0.0625f),
+            baseUV + glm::vec2(0.0625f, 0),
+        };
+    } else if (dir == ZPOS) {
+        faceUVs = {
+            baseUV + glm::vec2(0.0625f, 0),
+            baseUV + glm::vec2(0, 0),
+            baseUV + glm::vec2(0, 0.0625f),
+            baseUV + glm::vec2(0.0625f, 0.0625f),
+        };
+    } else if (dir == ZNEG) {
+        faceUVs = {
+            baseUV + glm::vec2(0.0625f, 0),
+            baseUV + glm::vec2(0, 0),
+            baseUV + glm::vec2(0, 0.0625f),
+            baseUV + glm::vec2(0.0625f, 0.0625f),
+        };
+    }
+
     for (int i = 0; i < 4; ++i) {
         interleavedData.push_back(glm::vec4(minX, 0, minZ, 0) + pos + vertices[i]);
         interleavedData.push_back(normal);
-        if (isAnimated(t)) {
+        if (t == WATER) {
          interleavedData.push_back(glm::vec4(faceUVs[i], 1.0f, 0.0f));
+        } else if (t == LAVA) {
+          interleavedData.push_back(glm::vec4(faceUVs[i], 2.0f, 0.0f));
         } else {
-          interleavedData.push_back(glm::vec4(faceUVs[i], 0.0f, 0.0f));
+            interleavedData.push_back(glm::vec4(faceUVs[i], 0.0f, 0.0f));
         }
     }
     indices.push_back(vC + 0);
@@ -131,44 +215,44 @@ void Chunk::generateVBOData() {
 
                     if (x_pos == EMPTY || (isTransparent(x_pos) && x_pos != t)) {
                         if (!isTransparent(t)) {
-                            updateVBO(opq_interleavedData, XPOS, blockPos, t, opq_vertexCount, opq_indices);
+                            updateVBO(opq_interleavedData, XPOS, blockPos, t, opq_vertexCount, opq_indices); opq_faceCount ++; opq_vertexCount += 4;
                         } else {
-                            updateVBO(trans_interleavedData, XPOS, blockPos, t, trans_vertexCount, trans_indices);
+                            updateVBO(trans_interleavedData, XPOS, blockPos, t, trans_vertexCount, trans_indices); trans_faceCount ++; trans_vertexCount += 4;
                         }
                     }
                     if (x_neg == EMPTY || (isTransparent(x_neg) && x_neg != t)) {
                         if (!isTransparent(t)) {
-                            updateVBO(opq_interleavedData, XNEG, blockPos, t, opq_vertexCount, opq_indices);
+                            updateVBO(opq_interleavedData, XNEG, blockPos, t, opq_vertexCount, opq_indices); opq_faceCount ++; opq_vertexCount += 4;;
                         } else {
-                            updateVBO(trans_interleavedData, XNEG, blockPos, t, trans_vertexCount, trans_indices);
+                            updateVBO(trans_interleavedData, XNEG, blockPos, t, trans_vertexCount, trans_indices); trans_faceCount ++; trans_vertexCount += 4;
                         }
                     }
                     if (y_pos == EMPTY || (isTransparent(y_pos) && y_pos != t)) {
                         if (!isTransparent(t)) {
-                            updateVBO(opq_interleavedData, YPOS, blockPos, t, opq_vertexCount, opq_indices);
+                            updateVBO(opq_interleavedData, YPOS, blockPos, t, opq_vertexCount, opq_indices); opq_faceCount ++; opq_vertexCount += 4;
                         } else {
-                            updateVBO(trans_interleavedData, YPOS, blockPos, t, trans_vertexCount, trans_indices);
+                            updateVBO(trans_interleavedData, YPOS, blockPos, t, trans_vertexCount, trans_indices); trans_faceCount ++; trans_vertexCount += 4;
                         }
                     }
                     if (y_neg == EMPTY || (isTransparent(y_neg) && y_neg != t)) {
                         if (!isTransparent(t)) {
-                            updateVBO(opq_interleavedData, YNEG, blockPos, t, opq_vertexCount, opq_indices);
+                            updateVBO(opq_interleavedData, YNEG, blockPos, t, opq_vertexCount, opq_indices); opq_faceCount ++; opq_vertexCount += 4;
                         } else {
-                            updateVBO(trans_interleavedData, YNEG, blockPos, t, trans_vertexCount, trans_indices);
+                            updateVBO(trans_interleavedData, YNEG, blockPos, t, trans_vertexCount, trans_indices); trans_faceCount ++; trans_vertexCount += 4;
                         }
                     }
                     if (z_pos == EMPTY || (isTransparent(z_pos) && z_pos != t)) {
                         if (!isTransparent(t)) {
-                            updateVBO(opq_interleavedData, ZPOS, blockPos, t, opq_vertexCount, opq_indices);
+                            updateVBO(opq_interleavedData, ZPOS, blockPos, t, opq_vertexCount, opq_indices); opq_faceCount ++; opq_vertexCount += 4;
                         } else {
-                            updateVBO(trans_interleavedData, ZPOS, blockPos, t, trans_vertexCount, trans_indices);
+                            updateVBO(trans_interleavedData, ZPOS, blockPos, t, trans_vertexCount, trans_indices); trans_faceCount ++; trans_vertexCount += 4;
                         }
                     }
                     if (z_neg == EMPTY || (isTransparent(z_neg) && z_neg != t)) {
                         if (!isTransparent(t)) {
-                            updateVBO(opq_interleavedData, ZNEG, blockPos, t, opq_vertexCount, opq_indices);
+                            updateVBO(opq_interleavedData, ZNEG, blockPos, t, opq_vertexCount, opq_indices); opq_faceCount ++; opq_vertexCount += 4;
                         } else {
-                            updateVBO(trans_interleavedData, ZNEG, blockPos, t, trans_vertexCount, trans_indices);
+                            updateVBO(trans_interleavedData, ZNEG, blockPos, t, trans_vertexCount, trans_indices); trans_faceCount ++; trans_vertexCount += 4;
                         }
                     }
                 }

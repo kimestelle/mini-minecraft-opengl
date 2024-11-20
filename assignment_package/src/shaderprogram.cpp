@@ -318,7 +318,7 @@ void ShaderProgram::drawOpq(Drawable &d) {
     }
     if ((handle = m_attribs["vs_UV"]) != -1 && d.bindBuffer(OPQ_INTERLEAVED)) {
         context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 2, GL_FLOAT, false, stride, (void*)(2 * sizeof(glm::vec4)));
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, stride, (void*)(2 * sizeof(glm::vec4)));
 
     }
 
@@ -356,7 +356,7 @@ void ShaderProgram::drawTrans(Drawable &d) {
     }
     if ((handle = m_attribs["vs_UV"]) != -1 && d.bindBuffer(TRANS_INTERLEAVED)) {
         context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 2, GL_FLOAT, false, stride, (void*)(2 * sizeof(glm::vec4)));
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, stride, (void*)(2 * sizeof(glm::vec4)));
 
     }
 

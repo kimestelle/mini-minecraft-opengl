@@ -59,6 +59,7 @@ public:
     void printShaderInfoLog(int shader);
     // Utility function that prints any shader linking errors to the console
     void printLinkInfoLog(int prog);
+    void setTime(int t);
 
     QString qTextFileRead(const char*);
 
