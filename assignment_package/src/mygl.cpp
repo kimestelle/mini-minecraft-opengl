@@ -290,7 +290,9 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             switch (e->button()) {
                 case Qt::LeftButton:
                 std::cout << "remove block" << std::endl;
-                    m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
+                    if (m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z) != BEDROCK) {
+                        m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
+                    }
                     break;
                 case Qt::RightButton:
                 {

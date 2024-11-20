@@ -290,13 +290,24 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
         for (int x = xPos; x < 16*WinChunks + xPos; x++) {
             for (int z = zPos; z < 16*WinChunks + zPos; z++) {
 
-                float noise = PerlinNoise(0.05 * x * 0.6237f, 0.05 * z * 0.6237f, 0);
+                float noise;
 
                 float typeTerrain = PerlinNoise(x * 0.01f * 1.5346 + 0.3246, z * 0.01f * 1.5346 + 0.8756, 0);
-
-                if (y <= 128) {
-                    setGlobalBlockAt(x, y, z, GRASS);
+                if (y == 0) {
+                    setGlobalBlockAt(x, y, z, BEDROCK);
+                } else if (y <= 128) {
+                    noise = PerlinNoise(0.1*x, 0.1*z, 0.1*y);
+                    if (noise < 0.3) {
+                        if (y<25) {
+                            setGlobalBlockAt(x, y, z, LAVA);
+                        } else {
+                            setGlobalBlockAt(x, y, z, EMPTY);
+                        }
+                    } else {
+                        setGlobalBlockAt(x, y, z, STONE);
+                    }
                 } else if (y == 129) {
+                    noise = PerlinNoise(0.05 * x * 0.6237f, 0.05 * z * 0.6237f, 0);
                     if (typeTerrain < 0.5) {
                         if(noise >= (0.3)) {
                             setGlobalBlockAt(x, y, z, GRASS);
@@ -308,6 +319,7 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                     }
                 }
                 else {
+                    noise = PerlinNoise(0.05 * x * 0.6237f, 0.05 * z * 0.6237f, 0);
                     float rand;
                     if (typeTerrain < 0.5) {
                         rand = noise - 0.06 * (y - 130);
