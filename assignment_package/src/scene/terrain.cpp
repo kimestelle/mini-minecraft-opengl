@@ -297,6 +297,7 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                     setGlobalBlockAt(x, y, z, BEDROCK);
                 } else if (y <= 128) {
                     noise = PerlinNoise(0.1*x, 0.1*z, 0.1*y);
+                    // I know instructions say negative but I find this produces a nice looking result
                     if (noise < 0.3) {
                         if (y<25) {
                             setGlobalBlockAt(x, y, z, LAVA);
