@@ -1,3 +1,7 @@
+**For milestone 2, Estelle implemented textures, Saahil completed terrain, and Jesse completed physics.**
+## Textures
+I first loaded the textures image using code from HW5, and then used my interleaved VBO creation logic from last milestone to split each chunk into a pair of opaque and transparent interleaved VBOs based on their block type and process / render them separately in each part of the pipeline. I indexed the location of each texture in the collective png file and assigned them to vertices/faces using the orientation of each face (for example, grass had different texture slots on its top facem side faces, and bottom). I then implemented animations for water and lava by making a time variable and incrementing it every time the frame updated (60fps). It was difficult to create a function that would create a smoothly looping animation; I experimented with trig and mod functions and ended up with a pretty good function. I also had trouble loading the image and had to debug my texture loading process + ensuring that the vector processing logic in the new system of two VBOs was accurate since some of the numbers ended up off.
+
 **For milestone 1, Estelle implemented chunking, Saahil completed terrain, and Jesse completed physics.**
 
 ## Chunking
