@@ -181,23 +181,23 @@ void MyGL::sendPlayerDataToGUI() const {
 // so paintGL() called at a rate of 60 frames per second.
 void MyGL::paintGL() {
     //redirect to postprocess
-    postProcessFBO.bindFrameBuffer();
+    // postProcessFBO.bindFrameBuffer();
     glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
 
     // Allocate buffer to read pixels
-    std::vector<unsigned char> pixels(width() * this->devicePixelRatio() * height() * this->devicePixelRatio() * 4);
+    // std::vector<unsigned char> pixels(width() * this->devicePixelRatio() * height() * this->devicePixelRatio() * 4);
 
-    // Read pixels from the framebuffer
-    glReadPixels(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio(), GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+    // // Read pixels from the framebuffer
+    // glReadPixels(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio(), GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
 
-    // Check if pixels are non-zero
-    bool hasNonZeroPixels = std::any_of(pixels.begin(), pixels.end(),
-                                        [](unsigned char val) { return val != 0; });
+    // // Check if pixels are non-zero
+    // bool hasNonZeroPixels = std::any_of(pixels.begin(), pixels.end(),
+    //                                     [](unsigned char val) { return val != 0; });
 
-    qDebug() << "Framebuffer has non-zero pixels:" << hasNonZeroPixels;
+    // qDebug() << "Framebuffer has non-zero pixels:" << hasNonZeroPixels;
 
     // Clear the screen so that we only see newly drawn images
-    glClearColor(0.f, 0.f, 0.f, 1.f);
+    // glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
@@ -219,28 +219,28 @@ void MyGL::paintGL() {
     glEnable(GL_DEPTH_TEST);
 
     // draw post process
-    glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
-    glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
+    // glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
+    // glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
 
-    glClearColor(0.f, 0.f, 0.f, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // glClearColor(0.f, 0.f, 0.f, 1.f);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    printGLErrorLog();
+    // printGLErrorLog();
     // Place the texture that stores the image of the 3D render
     // into texture slot 0
-    postProcessFBO.bindToTextureSlot(1);
-    printGLErrorLog();
+    // postProcessFBO.bindToTextureSlot(1);
+    // printGLErrorLog();
 
     // Set the sampler2D in the post-process shader to
     // read from the texture slot that we set the
     // texture into
-    progPostProcess.useMe();
+    // progPostProcess.useMe();
 
-    this->glUniform1i(progPostProcess.m_unifs["u_Texture"],
-                       postProcessFBO.getTextureSlot());
+    // this->glUniform1i(progPostProcess.m_unifs["u_Texture"],
+    //                    postProcessFBO.getTextureSlot());
 
     // draw quad with post shader
-    progPostProcess.drawOpq(quadDrawable);
+    // progPostProcess.drawOpq(quadDrawable);
 }
 
 // TODO: Change this so it renders the nine zones of generated
