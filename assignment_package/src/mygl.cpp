@@ -12,7 +12,9 @@ MyGL::MyGL(QWidget *parent)
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
-      m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch())
+      m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch()),
+      progPostProcess(this),
+      postProcessFBO(this, width(), height(), this->devicePixelRatio())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -134,6 +136,10 @@ void MyGL::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
+    //redirect to postprocess
+    postProcessFBO.bindFrameBuffer();
+    glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
+
     glm::mat4 viewproj = m_player.mcr_camera.getViewProj();
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
     m_progLambert.setUnifMat4("u_Model", glm::mat4());
@@ -147,6 +153,28 @@ void MyGL::paintGL() {
     m_progFlat.setUnifMat4("u_Model", glm::mat4());
     m_progFlat.draw(m_worldAxes);
     glEnable(GL_DEPTH_TEST);
+
+    // draw post process
+    glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
+    glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
+
+    glClearColor(0.f, 0.f, 0.f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    printGLErrorLog();
+    // Place the texture that stores the image of the 3D render
+    // into texture slot 0
+    postProcessFBO.bindToTextureSlot(0);
+    printGLErrorLog();
+
+    // Set the sampler2D in the post-process shader to
+    // read from the texture slot that we set the
+    // texture into
+    progPostProcess.useMe();
+    this->glUniform1i(progPostProcess.m_unifs["u_Texture"],
+                          postProcessFBO.getTextureSlot());
+    // draw quad with post shader
+    // progPostProcess.draw(quadDrawable);
 }
 
 // TODO: Change this so it renders the nine zones of generated

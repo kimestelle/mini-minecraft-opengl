@@ -7,6 +7,7 @@
 #include "scene/camera.h"
 #include "scene/terrain.h"
 #include "scene/player.h"
+#include "framebuffer.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
@@ -38,6 +39,9 @@ private:
     void sendPlayerDataToGUI() const;
 
     qint64 m_lastTime; // Used to calculate dT in tick().
+
+    ShaderProgram progPostProcess; // shader for application of post-process
+    FrameBuffer postProcessFBO; // framebuffer for post-process
 
 
 public:
