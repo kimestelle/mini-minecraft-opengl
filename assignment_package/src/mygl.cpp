@@ -5,6 +5,7 @@
 #include <QApplication>
 #include <QKeyEvent>
 #include <QDateTime>
+#include <thread>
 #include <QFile>
 
 
@@ -80,18 +81,20 @@ if (!QFile(":/textures/minecraft_textures_all.png").exists()){
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //transparency effect
 
 
+    int x = (m_player.mcr_position.x - 32) - ((int)(m_player.mcr_position.x - 32) % 64);
+    int z = (m_player.mcr_position.z - 32) - ((int)(m_player.mcr_position.z - 32) % 64);
+
+    for(int i = -1; i <= 1; i++) {
+        for(int j = -1; j <= 1; j++) {
+            // std::cout << x + i * 64 << ", " << z + j * 64 << std::endl;
+            m_terrain.GenerateTerrain(x + i * 64, z + j * 64);
+            // std::cout << "COokie" << std::endl;
+        }
+    }
+
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
     glBindVertexArray(vao);
-    int terrainBlock = 1;
-
-    for(int i = 0; i <= 0; i++) {
-        for(int j = 0; j <= 0; j++) {
-            std::cout << "Generating Terrain Region " << terrainBlock << "/25" << std::endl;
-            m_terrain.GenerateTerrain(i * 64, j * 64);
-            terrainBlock++;
-        }
-    }
 }
 
 
@@ -123,6 +126,35 @@ void MyGL::tick() {
         m_lastTime = currentTime;
     }
     m_player.tick(dT, m_inputs); // Player-side tick
+
+    int x = (m_player.mcr_position.x - 32) - ((int)(m_player.mcr_position.x - 32) % 64);
+    int z = (m_player.mcr_position.z - 32) - ((int)(m_player.mcr_position.z - 32) % 64);
+
+
+    auto f = [this](float x, float z) {
+        m_terrain.GenerateTerrain(x, z);
+    };
+
+    std::vector<std::thread> blockTypeWorkers = {};
+
+    for(int i = -2; i <= 2; i++) {
+        for(int j = -2; j <= 2; j++) {
+            // std::cout << x + i * 64 << ", " << z + j * 64 << std::endl;
+            if(!m_terrain.hasTerrainAt(x + i * 64, z + j * 64)) {
+                 std::cout << "gen thread for terrain " << x + i * 64 << ", " << z + j * 64 << std::endl;
+                 blockTypeWorkers.push_back(std::thread(f, x + i * 64, z + j * 64));
+                // f(x + i * 64, z + j * 64);
+            }
+            // std::cout << "COokie" << std::endl;
+        }
+    }
+
+    m_terrain.loadChunkVBOs();
+
+    for(auto &x : blockTypeWorkers) {
+        x.detach();
+    }
+
     m_inputs.mouseX = 0;
     m_inputs.mouseY = 0;
     m_progLambert.setUnifFloat("u_Time", m_time);
@@ -149,23 +181,23 @@ void MyGL::sendPlayerDataToGUI() const {
 // so paintGL() called at a rate of 60 frames per second.
 void MyGL::paintGL() {
     //redirect to postprocess
-    postProcessFBO.bindFrameBuffer();
+    // postProcessFBO.bindFrameBuffer();
     glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
 
     // Allocate buffer to read pixels
-    std::vector<unsigned char> pixels(width() * this->devicePixelRatio() * height() * this->devicePixelRatio() * 4);
+    // std::vector<unsigned char> pixels(width() * this->devicePixelRatio() * height() * this->devicePixelRatio() * 4);
 
-    // Read pixels from the framebuffer
-    glReadPixels(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio(), GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+    // // Read pixels from the framebuffer
+    // glReadPixels(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio(), GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
 
-    // Check if pixels are non-zero
-    bool hasNonZeroPixels = std::any_of(pixels.begin(), pixels.end(),
-                                        [](unsigned char val) { return val != 0; });
+    // // Check if pixels are non-zero
+    // bool hasNonZeroPixels = std::any_of(pixels.begin(), pixels.end(),
+    //                                     [](unsigned char val) { return val != 0; });
 
-    qDebug() << "Framebuffer has non-zero pixels:" << hasNonZeroPixels;
+    // qDebug() << "Framebuffer has non-zero pixels:" << hasNonZeroPixels;
 
     // Clear the screen so that we only see newly drawn images
-    glClearColor(0.f, 0.f, 0.f, 1.f);
+    // glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
@@ -187,36 +219,36 @@ void MyGL::paintGL() {
     glEnable(GL_DEPTH_TEST);
 
     // draw post process
-    glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
-    glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
+    // glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
+    // glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
 
-    glClearColor(0.f, 0.f, 0.f, 1.f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // glClearColor(0.f, 0.f, 0.f, 1.f);
+    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    printGLErrorLog();
+    // printGLErrorLog();
     // Place the texture that stores the image of the 3D render
     // into texture slot 0
-    postProcessFBO.bindToTextureSlot(1);
-    printGLErrorLog();
+    // postProcessFBO.bindToTextureSlot(1);
+    // printGLErrorLog();
 
     // Set the sampler2D in the post-process shader to
     // read from the texture slot that we set the
     // texture into
-    progPostProcess.useMe();
+    // progPostProcess.useMe();
 
-    this->glUniform1i(progPostProcess.m_unifs["u_Texture"],
-                       postProcessFBO.getTextureSlot());
+    // this->glUniform1i(progPostProcess.m_unifs["u_Texture"],
+    //                    postProcessFBO.getTextureSlot());
 
     // draw quad with post shader
-    progPostProcess.drawOpq(quadDrawable);
+    // progPostProcess.drawOpq(quadDrawable);
 }
 
 // TODO: Change this so it renders the nine zones of generated
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
 void MyGL::renderTerrain() {
-    int x = m_player.mcr_position.x- ((int)m_player.mcr_position.x % 64) + 32;
-    int z = m_player.mcr_position.z- ((int)m_player.mcr_position.z % 64) + 32;
+    int x = m_player.mcr_position.x;
+    int z = m_player.mcr_position.z;
 
     // for(int i = -1; i <= 1; i++) {
     //     for(int j = -1; j <= 1; j++) {
@@ -352,8 +384,10 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             switch (e->button()) {
                 case Qt::LeftButton:
                 std::cout << "remove block" << std::endl;
+                    //ERROR: WHEN DESTROYING THE BLOCK AT THE EDGE OF A CHUNK, WE DO NOT UPDATE THE VBO OF THE NEIGHBORING CHUNK
                     if (m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z) != BEDROCK) {
                         m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
+                        m_terrain.getChunkAt(currPos.x, currPos.z)->createVBOdata();
                     }
                     break;
                 case Qt::RightButton:
@@ -370,6 +404,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     }
                     if (m_terrain.hasChunkAt(currPos.x + shift.x, currPos.z + shift.z) && m_terrain.getGlobalBlockAt(currPos.x + shift.x, currPos.y + shift.y, currPos.z + shift.z) == EMPTY) {
                         m_terrain.setGlobalBlockAt(currPos.x + shift.x, currPos.y + shift.y, currPos.z + shift.z, GRASS);
+                        m_terrain.getChunkAt(currPos.x + shift.x, currPos.z + shift.z)->createVBOdata();
                     }
                     break;
                 }

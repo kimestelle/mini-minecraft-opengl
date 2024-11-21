@@ -1,24 +1,32 @@
 #include "chunk.h"
 #include <iostream>
 
-Chunk::Chunk(int x, int z, OpenGLContext* context) : Drawable(context), m_blocks(), minX(x), minZ(z), m_neighbors{{XPOS, nullptr}, {XNEG, nullptr}, {ZPOS, nullptr}, {ZNEG, nullptr}}
+Chunk::Chunk(int x, int z, OpenGLContext* context) : Drawable(context), m_blocks(), minX(x), minZ(z), m_neighbors{{XPOS, nullptr}, {XNEG, nullptr}, {ZPOS, nullptr}, {ZNEG, nullptr}},
+ready(false),
+    loaded(false),
+    working(false)
 {
     std::fill_n(m_blocks.begin(), 65536, EMPTY);
 }
 
 // Does bounds checking with at()
-BlockType Chunk::getLocalBlockAt(unsigned int x, unsigned int y, unsigned int z) const {
-    return m_blocks.at(x + 16 * y + 16 * 256 * z);
+BlockType Chunk::getLocalBlockAt(unsigned int x, unsigned int y, unsigned int z) {
+    blockMutex.lock();
+    auto p = m_blocks.at(x + 16 * y + 16 * 256 * z);
+    blockMutex.unlock();
+    return p;
 }
 
 // Exists to get rid of compiler warnings about int -> unsigned int implicit conversion
-BlockType Chunk::getLocalBlockAt(int x, int y, int z) const {
+BlockType Chunk::getLocalBlockAt(int x, int y, int z) {
     return getLocalBlockAt(static_cast<unsigned int>(x), static_cast<unsigned int>(y), static_cast<unsigned int>(z));
 }
 
 // Does bounds checking with at()
 void Chunk::setLocalBlockAt(unsigned int x, unsigned int y, unsigned int z, BlockType t) {
+    blockMutex.lock();
     m_blocks.at(x + 16 * y + 16 * 256 * z) = t;
+    blockMutex.unlock();
 }
 
 std::unordered_map<BlockType, glm::vec2> Chunk::blockUVs = {
@@ -187,12 +195,6 @@ bool isTransparent(BlockType t) {
 }
 
 void Chunk::generateVBOData() {
-    std::vector<GLuint> opq_indices;
-    std::vector<glm::vec4> opq_interleavedData;
-
-    std::vector<GLuint> trans_indices;
-    std::vector<glm::vec4> trans_interleavedData;
-
     int opq_faceCount = 0;
     int opq_vertexCount = 0;
 
@@ -262,6 +264,13 @@ void Chunk::generateVBOData() {
         // std::cout << "debug: face count: " << faceCount << std::endl;
         // std::cout << "debug: vertex count: " << vertexCount << std::endl;
 
+    working = true;
+}
+
+
+
+void Chunk::loadToGPU() {
+
     generateBuffer(OPQ_INTERLEAVED);
     generateBuffer(OPQ_INDEX);
 
@@ -310,9 +319,11 @@ void Chunk::generateVBOData() {
         indexCounts[TRANS_INTERLEAVED] = 0;
     }
 
+
     // std::cout << "debug: interleaved count " << this->elemCount(INTERLEAVED) << std::endl;
     // std::cout << "debug: 2 index count " << this->elemCount(INDEX) << std::endl;
 }
+
 
 void Chunk::createVBOdata() {
     generateVBOData();
