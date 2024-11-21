@@ -69,6 +69,8 @@ void MyGL::initializeGL()
     // m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
     progPostProcess.create(":/glsl/passthrough.vert.glsl", ":/glsl/postprocess.frag.glsl");
 
+    postProcessFBO.create();
+
 
 if (!QFile(":/textures/minecraft_textures_all.png").exists()){
         std::cerr << "error: tex file not found" << std::endl;
@@ -173,28 +175,28 @@ void MyGL::paintGL() {
     glEnable(GL_DEPTH_TEST);
 
     // draw post process
-    // glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
-    // glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
+    glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
+    glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
 
-    // glClearColor(0.f, 0.f, 0.f, 1.f);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.f, 0.f, 0.f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // printGLErrorLog();
-    // // Place the texture that stores the image of the 3D render
-    // // into texture slot 0
-    // postProcessFBO.bindToTextureSlot(0);
-    // printGLErrorLog();
+    printGLErrorLog();
+    // Place the texture that stores the image of the 3D render
+    // into texture slot 0
+    postProcessFBO.bindToTextureSlot(0);
+    printGLErrorLog();
 
-    // // Set the sampler2D in the post-process shader to
-    // // read from the texture slot that we set the
-    // // texture into
-    // progPostProcess.useMe();
+    // Set the sampler2D in the post-process shader to
+    // read from the texture slot that we set the
+    // texture into
+    progPostProcess.useMe();
 
-    // glActiveTexture(GL_TEXTURE0);
-    // progPostProcess.setUnifInt("u_Texture", 0);
+    this->glUniform1i(progPostProcess.m_unifs["u_Texture"],
+                       postProcessFBO.getTextureSlot());
 
-    // // draw quad with post shader
-    // progPostProcess.drawOpq(quadDrawable);
+    // draw quad with post shader
+    progPostProcess.drawOpq(quadDrawable);
 }
 
 // TODO: Change this so it renders the nine zones of generated
