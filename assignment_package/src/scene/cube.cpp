@@ -129,36 +129,36 @@ void createCubeIndices(GLuint (&cub_idx)[CUB_IDX_COUNT])
     }
 }
 
-void Cube::createVBOdata()
-{
-    GLuint sph_idx[CUB_IDX_COUNT];
-    glm::vec4 sph_vert_pos[CUB_VERT_COUNT];
-    glm::vec4 sph_vert_nor[CUB_VERT_COUNT];
+// void Cube::createVBOdata()
+// {
+//     GLuint sph_idx[CUB_IDX_COUNT];
+//     glm::vec4 sph_vert_pos[CUB_VERT_COUNT];
+//     glm::vec4 sph_vert_nor[CUB_VERT_COUNT];
 
-    createCubeVertexPositions(sph_vert_pos);
-    createCubeVertexNormals(sph_vert_nor);
-    createCubeIndices(sph_idx);
+//     createCubeVertexPositions(sph_vert_pos);
+//     createCubeVertexNormals(sph_vert_nor);
+//     createCubeIndices(sph_idx);
 
-    indexCounts[INDEX] = CUB_IDX_COUNT;
+//     indexCounts[INDEX] = CUB_IDX_COUNT;
 
-    // Create a VBO on our GPU and store its handle in bufIdx
-    generateBuffer(INDEX);
-    bindBuffer(INDEX);
-    // Pass the data stored in cyl_idx into the bound buffer, reading a number of bytes equal to
-    // SPH_IDX_COUNT multiplied by the size of a GLuint. This data is sent to the GPU to be read by shader programs.
-    mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, CUB_IDX_COUNT * sizeof(GLuint), sph_idx, GL_STATIC_DRAW);
+//     // Create a VBO on our GPU and store its handle in bufIdx
+//     generateBuffer(INDEX);
+//     bindBuffer(INDEX);
+//     // Pass the data stored in cyl_idx into the bound buffer, reading a number of bytes equal to
+//     // SPH_IDX_COUNT multiplied by the size of a GLuint. This data is sent to the GPU to be read by shader programs.
+//     mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, CUB_IDX_COUNT * sizeof(GLuint), sph_idx, GL_STATIC_DRAW);
 
-    // The next few sets of function calls are basically the same as above, except bufPos and bufNor are
-    // array buffers rather than element array buffers, as they store vertex attributes like position.
-    generateBuffer(POSITION);
-    bindBuffer(POSITION);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, CUB_VERT_COUNT * sizeof(glm::vec4), sph_vert_pos, GL_STATIC_DRAW);
+//     // The next few sets of function calls are basically the same as above, except bufPos and bufNor are
+//     // array buffers rather than element array buffers, as they store vertex attributes like position.
+//     generateBuffer(POSITION);
+//     bindBuffer(POSITION);
+//     mp_context->glBufferData(GL_ARRAY_BUFFER, CUB_VERT_COUNT * sizeof(glm::vec4), sph_vert_pos, GL_STATIC_DRAW);
 
-    generateBuffer(NORMAL);
-    bindBuffer(NORMAL);
-    mp_context->glBufferData(GL_ARRAY_BUFFER, CUB_VERT_COUNT * sizeof(glm::vec4), sph_vert_nor, GL_STATIC_DRAW);
+//     generateBuffer(NORMAL);
+//     bindBuffer(NORMAL);
+//     mp_context->glBufferData(GL_ARRAY_BUFFER, CUB_VERT_COUNT * sizeof(glm::vec4), sph_vert_nor, GL_STATIC_DRAW);
 
-}
+// }
 
 
 void Cube::createInstancedVBOdata(std::vector<glm::vec3> &offsets, std::vector<glm::vec3> &colors) {

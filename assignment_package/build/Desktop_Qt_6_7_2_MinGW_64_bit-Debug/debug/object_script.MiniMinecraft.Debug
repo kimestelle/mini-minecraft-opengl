@@ -13,7 +13,9 @@ debug/player.o
 debug/camera.o
 debug/playerinfo.o
 debug/chunk.o
+debug/texture.o
 debug/qrc_glsl.o
+debug/qrc_textures.o
 debug/moc_mainwindow.o
 debug/moc_mygl.o
 debug/moc_cameracontrolshelp.o

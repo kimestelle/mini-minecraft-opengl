@@ -178,17 +178,20 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
 // it draws each Chunk with the given ShaderProgram
 void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram) {
 
-        for (int x = minX; x < maxX; x += 16) {
-            for (int z = minZ; z < maxZ; z += 16) {
+        for(int x = minX; x < maxX; x += 16) {
+            for(int z = minZ; z < maxZ; z += 16) {
                 if (hasChunkAt(x, z)) {
-                    const uPtr<Chunk>& chunk = getChunkAt(x, z);
-                    // std::cout << "debug: drawing chunk at (" << x << ", " << z << ") with element count: " << chunk->elemCount(INDEX) << std::endl;
-                    if (chunk->elemCount(INDEX) > 0) {
-                        shaderProgram->drawInterleaved(*chunk);
-                        // std::cout << "index count @ terrain: " << chunk->elemCount(INDEX) << std::endl;
-                        // std::cout << "int count @ terrain: " << chunk->elemCount(INTERLEAVED) << std::endl;
-                    }
+                    const uPtr<Chunk> &chunk = getChunkAt(x, z);
+                    shaderProgram->drawOpq(*chunk);
+                }
+            }
+        }
 
+        for(int x = minX; x < maxX; x += 16) {
+            for(int z = minZ; z < maxZ; z += 16) {
+                if (hasChunkAt(x, z)) {
+                    const uPtr<Chunk> &chunk = getChunkAt(x, z);
+                    shaderProgram->drawTrans(*chunk);
                 }
             }
         }
@@ -235,7 +238,9 @@ void Terrain::CreateTestScene() {
     //     setGlobalBlockAt(32, y, 32, GRASS);
     // }
 
-    setGlobalBlockAt(0, 128, 0, GRASS);
+    setGlobalBlockAt(0, 128, 0, WATER);
+    setGlobalBlockAt(1, 128, 0, GRASS);
+
 
     //create vbo data
     for(int x = 0; x < 64; x += 16) {
