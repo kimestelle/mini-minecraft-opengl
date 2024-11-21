@@ -1,12 +1,13 @@
 #version 330 core
 
-in vec2 fs_UV;
+in vec4 fs_UV;
 
-out vec3 color;
+out vec4 color;
 
 uniform sampler2D u_Texture;
 
 void main()
 {
-    color = texture(u_Texture, fs_UV).rgb;
+    vec3 color_noA = texture(u_Texture, fs_UV.xy).rgb;
+    color = vec4(color_noA, 1.0);
 }
