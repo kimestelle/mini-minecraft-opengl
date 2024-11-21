@@ -1,3 +1,9 @@
+**For milestone 2, Estelle implemented textures, Saahil completed multithreading, and Jesse completed caves.**
+## Textures
+I first loaded the textures image using code from HW5, and then used my interleaved VBO creation logic from last milestone to split each chunk into a pair of opaque and transparent interleaved VBOs based on their block type and process / render them separately in each part of the pipeline. I indexed the location of each texture in the collective png file and assigned them to vertices/faces using the orientation of each face (for example, grass had different texture slots on its top facem side faces, and bottom). I then implemented animations for water and lava by making a time variable and incrementing it every time the frame updated (60fps). It was difficult to create a function that would create a smoothly looping animation; I experimented with trig and mod functions and ended up with a pretty good function. I also had trouble loading the image and had to debug my texture loading process + ensuring that the vector processing logic in the new system of two VBOs was accurate since some of the numbers ended up off.
+## Caves
+The Perlin Noise modification was fairly simple, just factoring in the additional vertices (8 total) necessary. For caves, I toyed around with the constants a bit to make sure that they looked nice and things worked well; lava and bedrock were also fairly simple. For the lava/water physics, I decreased player acceleration when they are in the water/lava, and implemented an up velocity on the space button as well. Lastly, for post-processing, I redirected the frame buffer to point to a separate texture, then redrew with post processing effects. I used a uniform variable specifically to handle how much to tint by, before redrawing onto the default frame buffer.
+
 **For milestone 1, Estelle implemented chunking, Saahil completed terrain, and Jesse completed physics.**
 
 ## Chunking

@@ -6,9 +6,9 @@
 #define dict std::unordered_map
 
 enum BufferType : unsigned char {
-    INDEX,
+    OPQ_INDEX, TRANS_INDEX,
     POSITION, NORMAL, COLOR, UV,
-    INTERLEAVED,
+    OPQ_INTERLEAVED, TRANS_INTERLEAVED,
     INSTANCED_OFFSET
 };
 

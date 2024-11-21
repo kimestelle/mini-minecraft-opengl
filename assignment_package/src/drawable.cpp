@@ -10,7 +10,8 @@ Drawable::Drawable(OpenGLContext* context)
     // Initialize the index count to -1 to prevent
     // attempting to draw a Drawable that has not
     // been fully initialized.
-    indexCounts[INDEX] = -1;
+    indexCounts[OPQ_INDEX] = -1;
+    indexCounts[TRANS_INDEX] = -1;
 }
 
 Drawable::~Drawable() {
@@ -46,7 +47,7 @@ bool Drawable::bindBuffer(BufferType buf) {
     if(bufGenerated[buf]) {
         // Should you have more than one kind of index buffer,
         // make sure to update this conditional to include them.
-        buf == INDEX ?
+        buf == OPQ_INDEX || buf == TRANS_INDEX ?
         mp_context->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufHandles[buf]) :
         mp_context->glBindBuffer(GL_ARRAY_BUFFER, bufHandles[buf]);
     }

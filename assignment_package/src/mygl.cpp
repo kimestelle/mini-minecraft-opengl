@@ -5,14 +5,18 @@
 #include <QApplication>
 #include <QKeyEvent>
 #include <QDateTime>
+#include <QFile>
 
 
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
-      m_progLambert(this), m_progFlat(this), m_progInstanced(this),
+      m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_texture(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
-      m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch())
+      m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch()),
+      progPostProcess(this),
+      postProcessFBO(this, width(), height(), this->devicePixelRatio()),
+      quadDrawable(this)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -56,11 +60,24 @@ void MyGL::initializeGL()
     //Create the instance of the world axes
     m_worldAxes.createVBOdata();
 
+    quadDrawable.createVBOdata();
+
     // Create and set up the diffuse shader
     m_progLambert.create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
     // Create and set up the flat lighting shader
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
-    m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
+    // m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
+    progPostProcess.create(":/glsl/passthrough.vert.glsl", ":/glsl/postprocess.frag.glsl");
+    postProcessFBO.create();
+
+    progPostProcess.addUniform("u_Texture");
+if (!QFile(":/textures/minecraft_textures_all.png").exists()){
+        std::cerr << "error: tex file not found" << std::endl;
+    } else {
+        m_texture.create(":/textures/minecraft_textures_all.png", GL_RGBA, GL_RGBA);
+    }
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //transparency effect
 
 
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
@@ -68,8 +85,8 @@ void MyGL::initializeGL()
     glBindVertexArray(vao);
     int terrainBlock = 1;
 
-    for(int i = -2; i <= 2; i++) {
-        for(int j = -2; j <= 2; j++) {
+    for(int i = 0; i <= 0; i++) {
+        for(int j = 0; j <= 0; j++) {
             std::cout << "Generating Terrain Region " << terrainBlock << "/25" << std::endl;
             m_terrain.GenerateTerrain(i * 64, j * 64);
             terrainBlock++;
@@ -108,6 +125,7 @@ void MyGL::tick() {
     m_player.tick(dT, m_inputs); // Player-side tick
     m_inputs.mouseX = 0;
     m_inputs.mouseY = 0;
+    m_progLambert.setUnifFloat("u_Time", m_time);
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
     //check terrain expansion
     // m_terrain.expandTerrainIfNeeded(m_player.mcr_position);
@@ -130,7 +148,24 @@ void MyGL::sendPlayerDataToGUI() const {
 // MyGL's constructor links update() to a timer that fires 60 times per second,
 // so paintGL() called at a rate of 60 frames per second.
 void MyGL::paintGL() {
+    //redirect to postprocess
+    postProcessFBO.bindFrameBuffer();
+    glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
+
+    // Allocate buffer to read pixels
+    std::vector<unsigned char> pixels(width() * this->devicePixelRatio() * height() * this->devicePixelRatio() * 4);
+
+    // Read pixels from the framebuffer
+    glReadPixels(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio(), GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+
+    // Check if pixels are non-zero
+    bool hasNonZeroPixels = std::any_of(pixels.begin(), pixels.end(),
+                                        [](unsigned char val) { return val != 0; });
+
+    qDebug() << "Framebuffer has non-zero pixels:" << hasNonZeroPixels;
+
     // Clear the screen so that we only see newly drawn images
+    glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
@@ -141,12 +176,39 @@ void MyGL::paintGL() {
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
 
+    m_progLambert.setUnifFloat("u_Time", m_time++);
+
+    m_texture.bind(0);
     renderTerrain();
 
     glDisable(GL_DEPTH_TEST);
     m_progFlat.setUnifMat4("u_Model", glm::mat4());
-    m_progFlat.draw(m_worldAxes);
+    m_progFlat.drawOpq(m_worldAxes);
     glEnable(GL_DEPTH_TEST);
+
+    // draw post process
+    glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
+    glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
+
+    glClearColor(0.f, 0.f, 0.f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    printGLErrorLog();
+    // Place the texture that stores the image of the 3D render
+    // into texture slot 0
+    postProcessFBO.bindToTextureSlot(1);
+    printGLErrorLog();
+
+    // Set the sampler2D in the post-process shader to
+    // read from the texture slot that we set the
+    // texture into
+    progPostProcess.useMe();
+
+    this->glUniform1i(progPostProcess.m_unifs["u_Texture"],
+                       postProcessFBO.getTextureSlot());
+
+    // draw quad with post shader
+    progPostProcess.drawOpq(quadDrawable);
 }
 
 // TODO: Change this so it renders the nine zones of generated
@@ -290,7 +352,9 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             switch (e->button()) {
                 case Qt::LeftButton:
                 std::cout << "remove block" << std::endl;
-                    m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
+                    if (m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z) != BEDROCK) {
+                        m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
+                    }
                     break;
                 case Qt::RightButton:
                 {

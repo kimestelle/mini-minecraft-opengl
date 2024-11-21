@@ -55,7 +55,6 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
     context->glAttachShader(prog, vertShader);
     context->glAttachShader(prog, fragShader);
     context->glLinkProgram(prog);
-
     // Check for linking success
     GLint linked;
     context->glGetProgramiv(prog, GL_LINK_STATUS, &linked);
@@ -110,7 +109,7 @@ void ShaderProgram::setUnifMat4(std::string name, const glm::mat4 &m) {
         }
     }
     catch(std::out_of_range &e) {
-        std::cout << "Error: could not find shader variable with name " << name << std::endl;
+        // std::cout << "Error: could not find shader variable with name " << name << std::endl;
     }
 }
 void ShaderProgram::setUnifVec2(std::string name, const glm::vec2 &v) {
@@ -122,7 +121,7 @@ void ShaderProgram::setUnifVec2(std::string name, const glm::vec2 &v) {
         }
     }
     catch(std::out_of_range &e) {
-        std::cout << "Error: could not find shader variable with name " << name << std::endl;
+        // std::cout << "Error: could not find shader variable with name " << name << std::endl;
     }
 }
 void ShaderProgram::setUnifVec3(std::string name, const glm::vec3 &v) {
@@ -134,7 +133,7 @@ void ShaderProgram::setUnifVec3(std::string name, const glm::vec3 &v) {
         }
     }
     catch(std::out_of_range &e) {
-        std::cout << "Error: could not find shader variable with name " << name << std::endl;
+        // std::cout << "Error: could not find shader variable with name " << name << std::endl;
     }
 }
 void ShaderProgram::setUnifFloat(std::string name, float f) {
@@ -176,123 +175,201 @@ void ShaderProgram::setUnifArrayInt(std::string name, int offset, int i) {
 
 
 //This function, as its name implies, uses the passed in GL widget
-void ShaderProgram::draw(Drawable &d) {
-    if(d.elemCount(INDEX) < 0) {
-        throw std::invalid_argument(
-                    "Attempting to draw a Drawable that has not initialized its count variable! Remember to set it to the length of your index array in create()."
-                    );
-    }
-    useMe();
+// void ShaderProgram::draw(Drawable &d) {
+//     if(d.elemCount(INDEX) < 0) {
+//         throw std::invalid_argument(
+//                     "Attempting to draw a Drawable that has not initialized its count variable! Remember to set it to the length of your index array in create()."
+//                     );
+//     }
+//     useMe();
 
-    int handle;
-    if ((handle = m_attribs["vs_Pos"]) != -1 && d.bindBuffer(POSITION)) {
-        context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 0, nullptr);
-    }
+//     int handle;
+//     if ((handle = m_attribs["vs_Pos"]) != -1 && d.bindBuffer(POSITION)) {
+//         context->glEnableVertexAttribArray(handle);
+//         context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 0, nullptr);
+//     }
 
-    if ((handle = m_attribs["vs_Nor"]) != -1 && d.bindBuffer(NORMAL)) {
-        context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 0, nullptr);
-    }
+//     if ((handle = m_attribs["vs_Nor"]) != -1 && d.bindBuffer(NORMAL)) {
+//         context->glEnableVertexAttribArray(handle);
+//         context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 0, nullptr);
+//     }
 
-    if ((handle = m_attribs["vs_Col"]) != -1 && d.bindBuffer(COLOR)) {
-        context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 0, nullptr);
-    }
+//     if ((handle = m_attribs["vs_Col"]) != -1 && d.bindBuffer(COLOR)) {
+//         context->glEnableVertexAttribArray(handle);
+//         context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 0, nullptr);
+//     }
 
-    // Bind the index buffer and then draw shapes from it.
-    // This invokes the shader program, which accesses the vertex buffers.
-    d.bindBuffer(INDEX);
-    context->glDrawElements(d.drawMode(), d.elemCount(INDEX), GL_UNSIGNED_INT, 0);
+//     // Bind the index buffer and then draw shapes from it.
+//     // This invokes the shader program, which accesses the vertex buffers.
+//     d.bindBuffer(INDEX);
+//     context->glDrawElements(d.drawMode(), d.elemCount(INDEX), GL_UNSIGNED_INT, 0);
 
-    if (m_attribs["vs_Pos"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Pos"]);
-    if (m_attribs["vs_Nor"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Nor"]);
-    if (m_attribs["vs_Col"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Col"]);
+//     if (m_attribs["vs_Pos"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Pos"]);
+//     if (m_attribs["vs_Nor"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Nor"]);
+//     if (m_attribs["vs_Col"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Col"]);
 
-    context->printGLErrorLog();
-}
+//     context->printGLErrorLog();
+// }
 
-void ShaderProgram::drawInstanced(InstancedDrawable &d) {
-    if(d.elemCount(INDEX) < 0) {
-        throw std::invalid_argument(
-                    "Attempting to draw a Drawable that has not initialized its count variable! Remember to set it to the length of your index array in create()."
-                    );
-    }
-    useMe();
+// void ShaderProgram::drawInstanced(InstancedDrawable &d) {
+//     if(d.elemCount(INDEX) < 0) {
+//         throw std::invalid_argument(
+//                     "Attempting to draw a Drawable that has not initialized its count variable! Remember to set it to the length of your index array in create()."
+//                     );
+//     }
+//     useMe();
 
-    int handle;
-    if ((handle = m_attribs["vs_Pos"]) != -1 && d.bindBuffer(POSITION)) {
-        context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 0, nullptr);
-        context->glVertexAttribDivisor(handle, 0);
-    }
+//     int handle;
+//     if ((handle = m_attribs["vs_Pos"]) != -1 && d.bindBuffer(POSITION)) {
+//         context->glEnableVertexAttribArray(handle);
+//         context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 0, nullptr);
+//         context->glVertexAttribDivisor(handle, 0);
+//     }
 
-    if ((handle = m_attribs["vs_Nor"]) != -1 && d.bindBuffer(NORMAL)) {
-        context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 0, nullptr);
-        context->glVertexAttribDivisor(handle, 0);
-    }
+//     if ((handle = m_attribs["vs_Nor"]) != -1 && d.bindBuffer(NORMAL)) {
+//         context->glEnableVertexAttribArray(handle);
+//         context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 0, nullptr);
+//         context->glVertexAttribDivisor(handle, 0);
+//     }
 
-    if ((handle = m_attribs["vs_ColInstanced"]) != -1 && d.bindBuffer(COLOR)) {
-        context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 3, GL_FLOAT, false, 0, nullptr);
-        context->glVertexAttribDivisor(handle, 1);
-    }
+//     if ((handle = m_attribs["vs_ColInstanced"]) != -1 && d.bindBuffer(COLOR)) {
+//         context->glEnableVertexAttribArray(handle);
+//         context->glVertexAttribPointer(handle, 3, GL_FLOAT, false, 0, nullptr);
+//         context->glVertexAttribDivisor(handle, 1);
+//     }
 
-    if ((handle = m_attribs["vs_OffsetInstanced"]) != -1 && d.bindBuffer(INSTANCED_OFFSET)) {
-        context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 3, GL_FLOAT, false, 0, nullptr);
-        context->glVertexAttribDivisor(handle, 1);
-    }
+//     if ((handle = m_attribs["vs_OffsetInstanced"]) != -1 && d.bindBuffer(INSTANCED_OFFSET)) {
+//         context->glEnableVertexAttribArray(handle);
+//         context->glVertexAttribPointer(handle, 3, GL_FLOAT, false, 0, nullptr);
+//         context->glVertexAttribDivisor(handle, 1);
+//     }
 
-    // Bind the index buffer and then draw shapes from it.
-    // This invokes the shader program, which accesses the vertex buffers.
-    d.bindBuffer(INDEX);
-    context->glDrawElementsInstanced(d.drawMode(), d.elemCount(INDEX), GL_UNSIGNED_INT, 0, d.instanceCount());
+//     // Bind the index buffer and then draw shapes from it.
+//     // This invokes the shader program, which accesses the vertex buffers.
+//     d.bindBuffer(INDEX);
+//     context->glDrawElementsInstanced(d.drawMode(), d.elemCount(INDEX), GL_UNSIGNED_INT, 0, d.instanceCount());
 
-    if (m_attribs["vs_Pos"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Pos"]);
-    if (m_attribs["vs_Nor"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Nor"]);
-    if (m_attribs["vs_ColInstanced"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_ColInstanced"]);
-    if (m_attribs["vs_OffsetInstanced"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_OffsetInstanced"]);
+//     if (m_attribs["vs_Pos"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Pos"]);
+//     if (m_attribs["vs_Nor"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Nor"]);
+//     if (m_attribs["vs_ColInstanced"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_ColInstanced"]);
+//     if (m_attribs["vs_OffsetInstanced"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_OffsetInstanced"]);
 
-    context->printGLErrorLog();
-}
+//     context->printGLErrorLog();
+// }
 
-void ShaderProgram::drawInterleaved(Drawable &d) {
-     // std::cout << "debug: element count for INDEX: " << d.elemCount(INDEX) << std::endl;
-    if (d.elemCount(INDEX) < 0) {
+// void ShaderProgram::drawInterleaved(Drawable &d) {
+//      // std::cout << "debug: element count for INDEX: " << d.elemCount(INDEX) << std::endl;
+//     if (d.elemCount(INDEX) < 0) {
+//         throw std::invalid_argument(
+//             "Attempting to draw a Drawable with an uninitialized element count! Remember to set it to the length of your index array in create()."
+//             );
+//     }
+//     useMe();
+
+
+//     const GLsizei stride = 3 * sizeof(glm::vec4);
+
+//     int handle;
+//     if ((handle = m_attribs["vs_Pos"]) != -1 && d.bindBuffer(INTERLEAVED)) {
+//         context->glEnableVertexAttribArray(handle);
+//         context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, stride, (void*)0);
+//     }
+//     if ((handle = m_attribs["vs_Nor"]) != -1 && d.bindBuffer(INTERLEAVED)) {
+//         context->glEnableVertexAttribArray(handle);
+//         context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, stride, (void*)sizeof(glm::vec4));
+//     }
+//     if ((handle = m_attribs["vs_UV"]) != -1 && d.bindBuffer(INTERLEAVED)) {
+//         context->glEnableVertexAttribArray(handle);
+//         context->glVertexAttribPointer(handle, 2, GL_FLOAT, false, stride, (void*)(2 * sizeof(glm::vec4)));
+
+//     }
+
+
+//     d.bindBuffer(INDEX);
+//     context->glDrawElements(d.drawMode(), d.elemCount(INDEX), GL_UNSIGNED_INT, 0);
+
+//     if (m_attribs["vs_Pos"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Pos"]);
+//     if (m_attribs["vs_Nor"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Nor"]);
+//     if (m_attribs["vs_UV"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_UV"]);
+
+//     context->printGLErrorLog();
+// }
+
+void ShaderProgram::drawOpq(Drawable &d) {
+    // std::cout << "debug: element count for INDEX: " << d.elemCount(INDEX) << std::endl;
+    if (d.elemCount(OPQ_INDEX) < 0) {
         throw std::invalid_argument(
             "Attempting to draw a Drawable with an uninitialized element count! Remember to set it to the length of your index array in create()."
             );
     }
     useMe();
 
+
+    const GLsizei stride = 3 * sizeof(glm::vec4);
+
     int handle;
-    if ((handle = m_attribs["vs_Pos"]) != -1 && d.bindBuffer(INTERLEAVED)) {
+    if ((handle = m_attribs["vs_Pos"]) != -1 && d.bindBuffer(OPQ_INTERLEAVED)) {
         context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), (void*)0);
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, stride, (void*)0);
     }
-    if ((handle = m_attribs["vs_Col"]) != -1 && d.bindBuffer(INTERLEAVED)) {
+    if ((handle = m_attribs["vs_Nor"]) != -1 && d.bindBuffer(OPQ_INTERLEAVED)) {
         context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 3 *sizeof(glm::vec4), (void*)sizeof(glm::vec4));
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, stride, (void*)sizeof(glm::vec4));
+    }
+    if ((handle = m_attribs["vs_UV"]) != -1 && d.bindBuffer(OPQ_INTERLEAVED)) {
+        context->glEnableVertexAttribArray(handle);
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, stride, (void*)(2 * sizeof(glm::vec4)));
 
     }
-    if ((handle = m_attribs["vs_Nor"]) != -1 && d.bindBuffer(INTERLEAVED)) {
-        context->glEnableVertexAttribArray(handle);
-        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, 3 * sizeof(glm::vec4), (void*)(2 * sizeof(glm::vec4)));
-    }
 
 
-    d.bindBuffer(INDEX);
-    context->glDrawElements(d.drawMode(), d.elemCount(INDEX), GL_UNSIGNED_INT, 0);
+    d.bindBuffer(OPQ_INDEX);
+    context->glDrawElements(d.drawMode(), d.elemCount(OPQ_INDEX), GL_UNSIGNED_INT, 0);
 
     if (m_attribs["vs_Pos"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Pos"]);
-    if (m_attribs["vs_Col"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Col"]);
     if (m_attribs["vs_Nor"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Nor"]);
+    if (m_attribs["vs_UV"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_UV"]);
 
     context->printGLErrorLog();
 }
 
+void ShaderProgram::drawTrans(Drawable &d) {
+    // std::cout << "debug: element count for INDEX: " << d.elemCount(INDEX) << std::endl;
+    if (d.elemCount(TRANS_INDEX) < 0) {
+        throw std::invalid_argument(
+            "Attempting to draw a Drawable with an uninitialized element count! Remember to set it to the length of your index array in create()."
+            );
+    }
+    useMe();
+
+
+    const GLsizei stride = 3 * sizeof(glm::vec4);
+
+    int handle;
+    if ((handle = m_attribs["vs_Pos"]) != -1 && d.bindBuffer(TRANS_INTERLEAVED)) {
+        context->glEnableVertexAttribArray(handle);
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, stride, (void*)0);
+    }
+    if ((handle = m_attribs["vs_Nor"]) != -1 && d.bindBuffer(TRANS_INTERLEAVED)) {
+        context->glEnableVertexAttribArray(handle);
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, stride, (void*)sizeof(glm::vec4));
+    }
+    if ((handle = m_attribs["vs_UV"]) != -1 && d.bindBuffer(TRANS_INTERLEAVED)) {
+        context->glEnableVertexAttribArray(handle);
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, false, stride, (void*)(2 * sizeof(glm::vec4)));
+
+    }
+
+
+    d.bindBuffer(TRANS_INDEX);
+    context->glDrawElements(d.drawMode(), d.elemCount(TRANS_INDEX), GL_UNSIGNED_INT, 0);
+
+    if (m_attribs["vs_Pos"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Pos"]);
+    if (m_attribs["vs_Nor"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_Nor"]);
+    if (m_attribs["vs_UV"] != -1) context->glDisableVertexAttribArray(m_attribs["vs_UV"]);
+
+    context->printGLErrorLog();
+}
 
 
 char* ShaderProgram::textFileRead(const char* fileName) {

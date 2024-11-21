@@ -51,12 +51,15 @@ public:
 
     //new draw function for interleaved VBOs
     void drawInterleaved(Drawable &d);
+    void drawOpq(Drawable &d);
+    void drawTrans(Drawable &d);
     // Utility function used in create()
     char* textFileRead(const char*);
     // Utility function that prints any shader compilation errors to the console
     void printShaderInfoLog(int shader);
     // Utility function that prints any shader linking errors to the console
     void printLinkInfoLog(int prog);
+    void setTime(int t);
 
     QString qTextFileRead(const char*);
 

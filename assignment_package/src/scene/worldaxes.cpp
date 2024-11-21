@@ -14,10 +14,10 @@ void WorldAxes::createVBOdata()
                         glm::vec4(0,1,0,1), glm::vec4(0,1,0,1),
                         glm::vec4(0,0,1,1), glm::vec4(0,0,1,1)};
 
-    indexCounts[INDEX] = 6;
+    indexCounts[OPQ_INDEX] = 6;
 
-    generateBuffer(INDEX);
-    bindBuffer(INDEX);
+    generateBuffer(OPQ_INDEX);
+    bindBuffer(OPQ_INDEX);
     mp_context->glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(GLuint), idx, GL_STATIC_DRAW);
     generateBuffer(POSITION);
     bindBuffer(POSITION);
