@@ -11,41 +11,43 @@
 // can compute what color to apply to its pixel based on things like vertex
 // position, light position, and vertex color.
 
-uniform vec4 u_Color; // The color with which to render this instance of geometry.
+uniform vec4 u_Color = vec4(0.0, 1.0, 0.0, 1.0); // The color with which to render this instance of geometry.
+uniform sampler2D u_Texture;
+uniform float u_Time;
 
 // These are the interpolated values out of the rasterizer, so you can't know
 // their specific values without knowing the vertices that contributed to them
 in vec4 fs_Pos;
 in vec4 fs_Nor;
 in vec4 fs_LightVec;
-in vec4 fs_Col;
+in vec4 fs_UV;
 
 out vec4 out_Col; // This is the final output color that you will see on your
 // screen for the pixel that is currently being processed.
 
 void main()
 {
+    vec2 uv = fs_UV.xy;
     // Material base color (before shading)
-    vec4 diffuseColor = fs_Col;
-
-    // Add black lines between blocks (REMOVE WHEN YOU APPLY TEXTURES)
-    bool xBound = fract(fs_Pos.x) < 0.0125 || fract(fs_Pos.x) > 0.9875;
-    bool yBound = fract(fs_Pos.y) < 0.0125 || fract(fs_Pos.y) > 0.9875;
-    bool zBound = fract(fs_Pos.z) < 0.0125 || fract(fs_Pos.z) > 0.9875;
-    if((xBound && yBound) || (xBound && zBound) || (yBound && zBound)) {
-        diffuseColor.rgb = vec3(0,0,0);
+    // vec4 diffuseColor = fs_Col;
+    if (fs_UV.z == 2.0) { // lava
+        uv.y += mod(u_Time * 0.0007, 1.0 / 16.0);
+    } else if (fs_UV.z == 1.0) { // water
+        uv.x += mod(u_Time * 0.001, 1.0 / 16.0);
     }
+
+    vec4 texColor = texture(u_Texture, uv);
 
     // Calculate the diffuse term for Lambert shading
     float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
     // Avoid negative lighting values
     diffuseTerm = clamp(diffuseTerm, 0, 1);
 
-    float ambientTerm = 0.2;
+    float ambientTerm = 0.5;
     float lightIntensity = diffuseTerm + ambientTerm;   //Add a small float value to the color multiplier
     //to simulate ambient lighting. This ensures that faces that are not
     //lit by our point light are not completely black.
 
     // Compute final shaded color
-    out_Col = vec4(diffuseColor.rgb * lightIntensity, diffuseColor.a);
+    out_Col = vec4(texColor.rgb * lightIntensity, texColor.a);
 }

@@ -13,7 +13,9 @@ release/player.o
 release/camera.o
 release/playerinfo.o
 release/chunk.o
+release/texture.o
 release/qrc_glsl.o
+release/qrc_textures.o
 release/moc_mainwindow.o
 release/moc_mygl.o
 release/moc_cameracontrolshelp.o
