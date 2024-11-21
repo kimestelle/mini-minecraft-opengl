@@ -1,12 +1,10 @@
 #pragma once
 #include "smartpointerhelp.h"
-#include "glm_includes.h"
 #include "chunk.h"
-#include <array>
 #include <unordered_map>
 #include <unordered_set>
 #include "shaderprogram.h"
-#include "cube.h"
+#include <mutex>
 
 
 //using namespace std;
@@ -51,10 +49,7 @@ private:
     // inefficient, and will cause your game to run very slowly until
     // milestone 1's Chunk VBO setup is completed.
 
-    // Set this to "true" whenever you modify the blocks
-    // in your terrain. NOT NEEDED ONCE MILESTONE 1's CHUNKING
-    // IS IMPLEMENTED.
-    bool m_chunkVBOsNeedUpdating;
+    std::mutex chunkMutex;
 
     OpenGLContext* mp_context;
 
@@ -68,17 +63,17 @@ public:
     Chunk* instantiateChunkAt(int x, int z);
     // Do these world-space coordinates lie within
     // a Chunk that exists?
-    bool hasChunkAt(int x, int z) const;
+    bool hasChunkAt(int x, int z);
     // Assuming a Chunk exists at these coords,
     // return a mutable reference to it
     uPtr<Chunk>& getChunkAt(int x, int z);
     // Assuming a Chunk exists at these coords,
     // return a const reference to it
-    const uPtr<Chunk>& getChunkAt(int x, int z) const;
+    // const uPtr<Chunk>& getChunkAt(int x, int z) const;
     // Given a world-space coordinate (which may have negative
     // values) return the block stored at that point in space.
-    BlockType getGlobalBlockAt(int x, int y, int z) const;
-    BlockType getGlobalBlockAt(glm::vec3 p) const;
+    BlockType getGlobalBlockAt(int x, int y, int z) ;
+    BlockType getGlobalBlockAt(glm::vec3 p) ;
     // Given a world-space coordinate (which may have negative
     // values) set the block at that point in space to the
     // given type.
@@ -88,6 +83,7 @@ public:
     // described by the min and max coords, using the provided
     // ShaderProgram
     void draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram);
+    void loadChunkVBOs();
 
     // Initializes the Chunks that store the 64 x 256 x 64 block scene you
     // see when the base code is run.
@@ -96,4 +92,5 @@ public:
     void GenerateTerrain(int x, int z);
     //expand terrain
     void expandTerrainIfNeeded(const glm::vec3 &playerPos);
+    bool hasTerrainAt(int x, int z);
 };

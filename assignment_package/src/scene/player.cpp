@@ -16,7 +16,7 @@ const glm::vec3 Player::corners[12] = {
     glm::vec3(0.5f, 1.0f, 0.5f)
 };
 
-Player::Player(glm::vec3 pos, const Terrain &terrain)
+Player::Player(glm::vec3 pos, Terrain &terrain)
     : Entity(pos), m_velocity(0,0,0), m_acceleration(0,0,0),
       m_camera(pos + glm::vec3(0, 1.5f, 0)), mcr_terrain(terrain),
       mcr_camera(m_camera), m_movementMode(MovementMode::WALKING),
@@ -92,7 +92,7 @@ void Player::processInputs(InputBundle &inputs) {
     }
 }
 
-void Player::computePhysics(float dT, const Terrain &terrain) {
+void Player::computePhysics(float dT, Terrain &terrain) {
     // TODO: Update the Player's position based on its acceleration
     // and velocity, and also perform collision detection.
     switch (this->m_movementMode) {

@@ -2,6 +2,7 @@
 #include "smartpointerhelp.h"
 #include "glm_includes.h"
 #include <array>
+#include <mutex>
 #include <unordered_map>
 #include <cstddef>
 
@@ -53,8 +54,12 @@ private:
     // a key for this map.
     // These allow us to properly determine
     std::unordered_map<Direction, Chunk*, EnumHash> m_neighbors;
+    std::mutex blockMutex;
 
 public:
+    bool ready;
+    bool loaded;
+
     Chunk(int x, int z, OpenGLContext* context);
 
     void create();
@@ -65,8 +70,8 @@ public:
     void createVBOdata() override;
     GLenum drawMode() override { return GL_TRIANGLES; }
 
-    BlockType getLocalBlockAt(unsigned int x, unsigned int y, unsigned int z) const;
-    BlockType getLocalBlockAt(int x, int y, int z) const;
+    BlockType getLocalBlockAt(unsigned int x, unsigned int y, unsigned int z);
+    BlockType getLocalBlockAt(int x, int y, int z) ;
     void setLocalBlockAt(unsigned int x, unsigned int y, unsigned int z, BlockType t);
     void linkNeighbor(uPtr<Chunk>& neighbor, Direction dir);
 };

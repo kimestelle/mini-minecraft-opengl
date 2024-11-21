@@ -5,6 +5,7 @@
 #include <QApplication>
 #include <QKeyEvent>
 #include <QDateTime>
+#include <thread>
 
 
 MyGL::MyGL(QWidget *parent)
@@ -63,18 +64,20 @@ void MyGL::initializeGL()
     m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
 
 
+    int x = (m_player.mcr_position.x - 32) - ((int)(m_player.mcr_position.x - 32) % 64);
+    int z = (m_player.mcr_position.z - 32) - ((int)(m_player.mcr_position.z - 32) % 64);
+
+    for(int i = -1; i <= 1; i++) {
+        for(int j = -1; j <= 1; j++) {
+            // std::cout << x + i * 64 << ", " << z + j * 64 << std::endl;
+            m_terrain.GenerateTerrain(x + i * 64, z + j * 64);
+            // std::cout << "COokie" << std::endl;
+        }
+    }
+
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
     glBindVertexArray(vao);
-    int terrainBlock = 1;
-
-    for(int i = -2; i <= 2; i++) {
-        for(int j = -2; j <= 2; j++) {
-            std::cout << "Generating Terrain Region " << terrainBlock << "/25" << std::endl;
-            m_terrain.GenerateTerrain(i * 64, j * 64);
-            terrainBlock++;
-        }
-    }
 }
 
 
@@ -106,6 +109,35 @@ void MyGL::tick() {
         m_lastTime = currentTime;
     }
     m_player.tick(dT, m_inputs); // Player-side tick
+
+    int x = (m_player.mcr_position.x - 32) - ((int)(m_player.mcr_position.x - 32) % 64);
+    int z = (m_player.mcr_position.z - 32) - ((int)(m_player.mcr_position.z - 32) % 64);
+
+
+    auto f = [this](float x, float z) {
+        m_terrain.GenerateTerrain(x, z);
+    };
+
+    std::vector<std::thread> blockTypeWorkers = {};
+
+    for(int i = -2; i <= 2; i++) {
+        for(int j = -2; j <= 2; j++) {
+            // std::cout << x + i * 64 << ", " << z + j * 64 << std::endl;
+            if(!m_terrain.hasTerrainAt(x + i * 64, z + j * 64)) {
+                 std::cout << "gen thread for terrain " << x + i * 64 << ", " << z + j * 64 << std::endl;
+                 blockTypeWorkers.push_back(std::thread(f, x + i * 64, z + j * 64));
+                // f(x + i * 64, z + j * 64);
+            }
+            // std::cout << "COokie" << std::endl;
+        }
+    }
+
+    m_terrain.loadChunkVBOs();
+
+    for(auto &x : blockTypeWorkers) {
+        x.detach();
+    }
+
     m_inputs.mouseX = 0;
     m_inputs.mouseY = 0;
     update(); // Calls paintGL() as part of a larger QOpenGLWidget pipeline
@@ -153,8 +185,8 @@ void MyGL::paintGL() {
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
 void MyGL::renderTerrain() {
-    int x = m_player.mcr_position.x- ((int)m_player.mcr_position.x % 64) + 32;
-    int z = m_player.mcr_position.z- ((int)m_player.mcr_position.z % 64) + 32;
+    int x = m_player.mcr_position.x;
+    int z = m_player.mcr_position.z;
 
     // for(int i = -1; i <= 1; i++) {
     //     for(int j = -1; j <= 1; j++) {
@@ -291,6 +323,8 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                 case Qt::LeftButton:
                 std::cout << "remove block" << std::endl;
                     m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
+                    m_terrain.getChunkAt(currPos.x, currPos.z)->createVBOdata();
+                    //ERROR: WHEN DESTROYING THE BLOCK AT THE EDGE OF A CHUNK, WE DO NOT UPDATE THE VBO OF THE NEIGHBORING CHUNK
                     break;
                 case Qt::RightButton:
                 {
@@ -306,6 +340,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     }
                     if (m_terrain.hasChunkAt(currPos.x + shift.x, currPos.z + shift.z) && m_terrain.getGlobalBlockAt(currPos.x + shift.x, currPos.y + shift.y, currPos.z + shift.z) == EMPTY) {
                         m_terrain.setGlobalBlockAt(currPos.x + shift.x, currPos.y + shift.y, currPos.z + shift.z, GRASS);
+                        m_terrain.getChunkAt(currPos.x + shift.x, currPos.z + shift.z)->createVBOdata();
                     }
                     break;
                 }

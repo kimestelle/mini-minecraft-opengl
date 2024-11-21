@@ -1,24 +1,31 @@
 #include "chunk.h"
 #include <iostream>
 
-Chunk::Chunk(int x, int z, OpenGLContext* context) : Drawable(context), m_blocks(), minX(x), minZ(z), m_neighbors{{XPOS, nullptr}, {XNEG, nullptr}, {ZPOS, nullptr}, {ZNEG, nullptr}}
+Chunk::Chunk(int x, int z, OpenGLContext* context) : Drawable(context), m_blocks(), minX(x), minZ(z), m_neighbors{{XPOS, nullptr}, {XNEG, nullptr}, {ZPOS, nullptr}, {ZNEG, nullptr}},
+ready(false),
+    loaded(false)
 {
     std::fill_n(m_blocks.begin(), 65536, EMPTY);
 }
 
 // Does bounds checking with at()
-BlockType Chunk::getLocalBlockAt(unsigned int x, unsigned int y, unsigned int z) const {
-    return m_blocks.at(x + 16 * y + 16 * 256 * z);
+BlockType Chunk::getLocalBlockAt(unsigned int x, unsigned int y, unsigned int z) {
+    blockMutex.lock();
+    auto p = m_blocks.at(x + 16 * y + 16 * 256 * z);
+    blockMutex.unlock();
+    return p;
 }
 
 // Exists to get rid of compiler warnings about int -> unsigned int implicit conversion
-BlockType Chunk::getLocalBlockAt(int x, int y, int z) const {
+BlockType Chunk::getLocalBlockAt(int x, int y, int z) {
     return getLocalBlockAt(static_cast<unsigned int>(x), static_cast<unsigned int>(y), static_cast<unsigned int>(z));
 }
 
 // Does bounds checking with at()
 void Chunk::setLocalBlockAt(unsigned int x, unsigned int y, unsigned int z, BlockType t) {
+    blockMutex.lock();
     m_blocks.at(x + 16 * y + 16 * 256 * z) = t;
+    blockMutex.unlock();
 }
 
 
@@ -82,6 +89,8 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
 void Chunk::generateVBOData() {
     std::vector<GLuint> indices;
     std::vector<glm::vec4> interleavedData;
+
+    std::cout << "Generating VBO Data for " << minX << ", " << minZ << std::endl;
 
     int faceCount = 0;
     int vertexCount = 0;
