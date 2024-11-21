@@ -3,7 +3,8 @@
 
 Chunk::Chunk(int x, int z, OpenGLContext* context) : Drawable(context), m_blocks(), minX(x), minZ(z), m_neighbors{{XPOS, nullptr}, {XNEG, nullptr}, {ZPOS, nullptr}, {ZNEG, nullptr}},
 ready(false),
-    loaded(false)
+    loaded(false),
+    working(false)
 {
     std::fill_n(m_blocks.begin(), 65536, EMPTY);
 }
@@ -194,12 +195,6 @@ bool isTransparent(BlockType t) {
 }
 
 void Chunk::generateVBOData() {
-    std::vector<GLuint> opq_indices;
-    std::vector<glm::vec4> opq_interleavedData;
-
-    std::vector<GLuint> trans_indices;
-    std::vector<glm::vec4> trans_interleavedData;
-
     int opq_faceCount = 0;
     int opq_vertexCount = 0;
 
@@ -269,6 +264,13 @@ void Chunk::generateVBOData() {
         // std::cout << "debug: face count: " << faceCount << std::endl;
         // std::cout << "debug: vertex count: " << vertexCount << std::endl;
 
+    working = true;
+}
+
+
+
+void Chunk::loadToGPU() {
+
     generateBuffer(OPQ_INTERLEAVED);
     generateBuffer(OPQ_INDEX);
 
@@ -317,9 +319,11 @@ void Chunk::generateVBOData() {
         indexCounts[TRANS_INTERLEAVED] = 0;
     }
 
+
     // std::cout << "debug: interleaved count " << this->elemCount(INTERLEAVED) << std::endl;
     // std::cout << "debug: 2 index count " << this->elemCount(INDEX) << std::endl;
 }
+
 
 void Chunk::createVBOdata() {
     generateVBOData();

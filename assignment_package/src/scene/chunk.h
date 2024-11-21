@@ -56,9 +56,18 @@ private:
     std::unordered_map<Direction, Chunk*, EnumHash> m_neighbors;
     std::mutex blockMutex;
 
+
+
+    std::vector<GLuint> opq_indices;
+    std::vector<glm::vec4> opq_interleavedData;
+
+    std::vector<GLuint> trans_indices;
+    std::vector<glm::vec4> trans_interleavedData;
+
 public:
     bool ready;
     bool loaded;
+    bool working;
 
     Chunk(int x, int z, OpenGLContext* context);
     static std::unordered_map<BlockType, glm::vec2> blockUVs;
@@ -67,6 +76,7 @@ public:
     void create();
     void generateVBOData();
     void loadVBO();
+    void loadToGPU();
     void updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, const glm::vec4& pos, BlockType t, int vC, std::vector<GLuint>& indices);
 
     void createVBOdata() override;

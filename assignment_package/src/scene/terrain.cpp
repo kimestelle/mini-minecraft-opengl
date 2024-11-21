@@ -3,6 +3,7 @@
 #include <random>
 #include <stdexcept>
 #include <iostream>
+#include <thread>
 
 Terrain::Terrain(OpenGLContext *context)
     : m_chunks(), m_generatedTerrain(),
@@ -142,7 +143,22 @@ void Terrain::setGlobalBlockAt(int x, int y, int z, BlockType t)
 void Terrain::loadChunkVBOs() {
     for (const auto& [key, value] : m_chunks) {
         if(value->ready && !value->loaded) {
-            value->createVBOdata();
+            std::cout << "Creating VBO Data" << std::endl;
+            value->ready = false;
+            value->working = false;
+            auto x = value.get();
+            auto f = [x]() {
+                x->createVBOdata();
+            };
+
+            auto VBOWorker = std::thread(f);
+            VBOWorker.detach();
+        }
+
+        if(value->working) { ///DONE WORKING
+            std::cout << "Loading to GPU" << std::endl;
+            value->loadToGPU();
+            value->working = false;
             value->loaded = true;
         }
     }
@@ -182,7 +198,9 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
             for(int z = minZ; z < maxZ; z += 16) {
                 if (hasChunkAt(x, z)) {
                     const uPtr<Chunk> &chunk = getChunkAt(x, z);
-                    shaderProgram->drawOpq(*chunk);
+                    if(chunk->loaded) {
+                        shaderProgram->drawOpq(*chunk);
+                    }
                 }
             }
         }
@@ -191,7 +209,9 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
             for(int z = minZ; z < maxZ; z += 16) {
                 if (hasChunkAt(x, z)) {
                     const uPtr<Chunk> &chunk = getChunkAt(x, z);
-                    shaderProgram->drawTrans(*chunk);
+                    if(chunk->loaded) {
+                        shaderProgram->drawTrans(*chunk);
+                    }
                 }
             }
         }
