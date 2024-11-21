@@ -9,6 +9,7 @@
 #include "scene/player.h"
 #include "framebuffer.h"
 #include "texture.h"
+#include "scene/quad.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
@@ -47,6 +48,7 @@ private:
 
     ShaderProgram progPostProcess; // shader for application of post-process
     FrameBuffer postProcessFBO; // framebuffer for post-process
+    Quad quadDrawable;
 
 
 public:

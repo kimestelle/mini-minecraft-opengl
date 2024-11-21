@@ -16,11 +16,7 @@
 // block types, but in the scope of this project we'll never get anywhere near that many.
 enum BlockType : unsigned char
 {
-<<<<<<< HEAD
     EMPTY, GRASS, DIRT, STONE, WATER, SNOW, LAVA, BEDROCK
-=======
-    EMPTY, GRASS, DIRT, STONE, WATER, SNOW, LAVA
->>>>>>> d7d0dc5569b411aede7c6a27ad3508c9c6d02c0c
 };
 
 // The six cardinal directions in 3D space

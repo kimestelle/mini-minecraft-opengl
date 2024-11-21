@@ -68,15 +68,3 @@ public:
 
     virtual void createInstancedVBOdata(std::vector<glm::vec3> &offsets, std::vector<glm::vec3> &colors) = 0;
 };
-
-class Quad : public Drawable {
-public:
-    Quad(OpenGLContext*);
-    ~Quad();
-
-    // A function that initializes the vertex
-    // coordinates for a quadrangle that covers
-    // the entire screen in screen space,
-    // then buffers that data to the GPU.
-    void initializeAndBufferGeometryData();
-};

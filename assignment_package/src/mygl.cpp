@@ -15,7 +15,8 @@ MyGL::MyGL(QWidget *parent)
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
       m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch()),
       progPostProcess(this),
-      postProcessFBO(this, width(), height(), this->devicePixelRatio())
+      postProcessFBO(this, width(), height(), this->devicePixelRatio()),
+      quadDrawable(this)
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -59,11 +60,14 @@ void MyGL::initializeGL()
     //Create the instance of the world axes
     m_worldAxes.createVBOdata();
 
+    quadDrawable.createVBOdata();
+
     // Create and set up the diffuse shader
     m_progLambert.create(":/glsl/lambert.vert.glsl", ":/glsl/lambert.frag.glsl");
     // Create and set up the flat lighting shader
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
     // m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
+    progPostProcess.create(":/glsl/passthrough.vert.glsl", ":/glsl/postprocess.frag.glsl");
 
 
 if (!QFile(":/textures/minecraft_textures_all.png").exists()){
@@ -188,7 +192,7 @@ void MyGL::paintGL() {
     this->glUniform1i(progPostProcess.m_unifs["u_Texture"],
                           postProcessFBO.getTextureSlot());
     // draw quad with post shader
-    // progPostProcess.draw(quadDrawable);
+    progPostProcess.drawOpq(quadDrawable);
 }
 
 // TODO: Change this so it renders the nine zones of generated
