@@ -303,7 +303,7 @@ void Terrain::CreateTestScene() {
 // }
 
 
-float PerlinNoise(float x, float y);
+float PerlinNoise(float x, float y, float z);
 
 
 void Terrain::GenerateTerrain(int xPos, int zPos)  {
@@ -343,13 +343,25 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
         for (int x = xPos; x < 16*WinChunks + xPos; x++) {
             for (int z = zPos; z < 16*WinChunks + zPos; z++) {
 
-                float noise = PerlinNoise(0.05 * x * 0.6237f, 0.05 * z * 0.6237f);
+                float noise;
 
-                float typeTerrain = PerlinNoise(x * 0.01f * 1.5346 + 0.3246, z * 0.01f * 1.5346 + 0.8756);
-
-                if (y <= 128) {
-                    setGlobalBlockAt(x, y, z, GRASS);
+                float typeTerrain = PerlinNoise(x * 0.01f * 1.5346 + 0.3246, z * 0.01f * 1.5346 + 0.8756, 0);
+                if (y == 0) {
+                    setGlobalBlockAt(x, y, z, BEDROCK);
+                } else if (y <= 128) {
+                    noise = PerlinNoise(0.1*x, 0.1*z, 0.1*y);
+                    // I know instructions say negative but I find this produces a nice looking result
+                    if (noise < 0.3) {
+                        if (y<25) {
+                            setGlobalBlockAt(x, y, z, LAVA);
+                        } else {
+                            setGlobalBlockAt(x, y, z, EMPTY);
+                        }
+                    } else {
+                        setGlobalBlockAt(x, y, z, STONE);
+                    }
                 } else if (y == 129) {
+                    noise = PerlinNoise(0.05 * x * 0.6237f, 0.05 * z * 0.6237f, 0);
                     if (typeTerrain < 0.5) {
                         if(noise >= (0.3)) {
                             setGlobalBlockAt(x, y, z, GRASS);
@@ -361,6 +373,7 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                     }
                 }
                 else {
+                    noise = PerlinNoise(0.05 * x * 0.6237f, 0.05 * z * 0.6237f, 0);
                     float rand;
                     if (typeTerrain < 0.5) {
                         rand = noise - 0.06 * (y - 130);
@@ -428,16 +441,16 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
 
 
 
-float PerlinNoise(float x, float y) {
+float PerlinNoise(float x, float y, float z) {
     // Fade function to smooth the interpolation
     auto fade = [](float t) { return t * t * t * (t * (t * 6 - 15) + 10); };
 
     // Gradient function (returns a pseudo-random gradient value)
-    auto grad = [](int hash, float x, float y) -> float {
+    auto grad = [](int hash, float x, float y, float z) -> float {
         int h = hash & 15;
         float u = (h < 8) ? x : y;
-        float v = (h < 4) ? y : (h == 12 || h == 14) ? x : 0;
-        return (h & 1 ? -u : u) + (h & 2 ? -v : v);
+        float v = (h < 4) ? y : (h == 12 || h == 14) ? x : z;
+        return (h & 1 ? -u : u) + (h & 2 ? -v : v) + (h & 4 ? -z : z);
     };
 
     // Permutation table (fixed, deterministic)
@@ -451,38 +464,54 @@ float PerlinNoise(float x, float y) {
     };
 
     // Hash function to map 2D coordinates to a deterministic pseudo-random value
-    auto hash = [&](int x, int y) -> int {
-        return p[(x + p[(y & 255)]) & 255];
+    auto hash = [&](int x, int y, int z) -> int {
+        return p[(x + p[(y + p[z & 255]) & 255]) & 255];
     };
 
     // Determine grid cell coordinates
     int X = static_cast<int>(std::floor(x)) & 255;
     int Y = static_cast<int>(std::floor(y)) & 255;
+    int Z = static_cast<int>(std::floor(z)) & 255;
 
     // Relative coordinates in grid cell
     float xf = x - std::floor(x);
     float yf = y - std::floor(y);
+    float zf = z - std::floor(z);
 
     // Fade curves for smooth interpolation
     float u = fade(xf);
     float v = fade(yf);
+    float w = fade(zf);
 
     // Hash coordinates of the 4 corners of the unit square
-    int aa = hash(X, Y);
-    int ab = hash(X, Y + 1);
-    int ba = hash(X + 1, Y);
-    int bb = hash(X + 1, Y + 1);
+    int aaa = hash(X, Y, Z);
+    int aab = hash(X, Y, Z + 1);
+    int aba = hash(X, Y + 1, Z);
+    int abb = hash(X, Y + 1, Z + 1);
+    int baa = hash(X + 1, Y, Z);
+    int bab = hash(X + 1, Y, Z + 1);
+    int bba = hash(X + 1, Y + 1, Z);
+    int bbb = hash(X + 1, Y + 1, Z + 1);
 
     // Interpolate gradients using fade function
-    float gradAA = grad(aa, xf, yf);
-    float gradAB = grad(ab, xf, yf - 1);
-    float gradBA = grad(ba, xf - 1, yf);
-    float gradBB = grad(bb, xf - 1, yf - 1);
+    float gradAAA = grad(aaa, xf, yf, zf);
+    float gradAAB = grad(aab, xf, yf, zf - 1);
+    float gradABA = grad(aba, xf, yf - 1, zf);
+    float gradABB = grad(abb, xf, yf - 1, zf - 1);
+    float gradBAA = grad(baa, xf - 1, yf, zf);
+    float gradBAB = grad(bab, xf - 1, yf, zf - 1);
+    float gradBBA = grad(bba, xf - 1, yf - 1, zf);
+    float gradBBB = grad(bbb, xf - 1, yf - 1, zf - 1);
 
     // Interpolate the results
-    float x1 = glm::mix(gradAA, gradBA, u);
-    float x2 = glm::mix(gradAB, gradBB, u);
-    return glm::mix(x1, x2, v) * 0.5f + 0.5f; // Normalize the result to [0, 1]
+    float x1 = glm::mix(gradAAA, gradBAA, u);
+    float x2 = glm::mix(gradABA, gradBBA, u);
+    float y1 = glm::mix(x1, x2, v);
+    x1 = glm::mix(gradAAB, gradBAB, u);
+    x2 = glm::mix(gradABB, gradBBB, u);
+    float y2 = glm::mix(x1, x2, v);
+
+    return glm::mix(y1, y2, w) * 0.5f + 0.5f; // Normalize the result to [0, 1]
 }
 
 

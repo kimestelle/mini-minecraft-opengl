@@ -20,6 +20,7 @@ private:
     static const glm::vec3 corners[12];
 
     bool isGrounded() const;
+    bool isSubmerged() const;
 
 public:
     // Readonly public reference to our camera
