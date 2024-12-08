@@ -148,7 +148,7 @@ void Terrain::loadChunkVBOs() {
             value->working = false;
             auto x = value.get();
             auto f = [x]() {
-                x->createVBOdata();
+                x->generateVBOData();
             };
 
             auto VBOWorker = std::thread(f);

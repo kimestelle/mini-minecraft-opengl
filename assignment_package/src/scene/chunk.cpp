@@ -208,10 +208,6 @@ void Chunk::generateVBOData() {
                 BlockType t = getLocalBlockAt(x, y, z);
                 glm::vec4 blockPos(x, y, z, 0);
 
-                if(x == 47 - minX && y == 130 && z == 45-minZ) {
-                    std::cout << "BlockType: " <<  t << std::endl;
-                }
-
                 if (t != EMPTY) {
                     BlockType x_pos = (x < 15) ? getLocalBlockAt(x + 1, y, z) : (m_neighbors[XPOS] ? m_neighbors[XPOS]->getLocalBlockAt(0, y, z) : EMPTY);
                     BlockType x_neg = (x > 0) ? getLocalBlockAt(x - 1, y, z) : (m_neighbors[XNEG] ? m_neighbors[XNEG]->getLocalBlockAt(15, y, z) : EMPTY);
@@ -276,6 +272,8 @@ void Chunk::generateVBOData() {
 
 void Chunk::loadToGPU() {
 
+    std::cout << "Loading to GPU" << std::endl;
+
     generateBuffer(OPQ_INTERLEAVED);
     generateBuffer(OPQ_INDEX);
 
@@ -332,6 +330,7 @@ void Chunk::loadToGPU() {
 
 void Chunk::createVBOdata() {
     generateVBOData();
+    loadToGPU();
 }
 
 void Chunk::create() {
