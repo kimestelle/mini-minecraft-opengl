@@ -262,8 +262,11 @@ void Chunk::generateVBOData() {
             }
         }
     }
-        // std::cout << "debug: face count: " << faceCount << std::endl;
-        // std::cout << "debug: vertex count: " << vertexCount << std::endl;
+
+    /*
+        std::cout << "debug: face count: " << trans_faceCount << std::endl;
+        std::cout << "debug: vertex count: " << trans_vertexCount << std::endl;
+    */
 
     working = true;
 }
@@ -298,6 +301,8 @@ void Chunk::loadToGPU() {
     } else {
         indexCounts[OPQ_INTERLEAVED] = 0;
     }
+
+    std::cout << "debug: INTERLEAVED count: " << indexCounts[OPQ_INTERLEAVED] << std::endl;
 
     generateBuffer(TRANS_INTERLEAVED);
     generateBuffer(TRANS_INDEX);

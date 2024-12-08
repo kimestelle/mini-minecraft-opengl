@@ -376,7 +376,7 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     if (m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z) != BEDROCK) {
                         m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
                         // m_terrain.getChunkAt(currPos.x, currPos.z)->destroyVBOdata();
-                        m_terrain.getChunkAt(currPos.x, currPos.z)->generateVBOData();
+                        m_terrain.getChunkAt(currPos.x, currPos.z)->createVBOdata();
 
                         // m_terrain.loadChunkVBOs();
                     }
