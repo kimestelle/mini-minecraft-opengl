@@ -68,10 +68,10 @@ void Player::processInputs(InputBundle &inputs) {
                 }
             } else {
                 if (inputs.spacePressed && grounded) {
-                    this->m_velocity.y = 7.f;
+                    this->m_velocity.y = 15.f;
                 }
             }
-            this->m_acceleration.y = submerged ? -8.f : -12.f;
+            this->m_acceleration.y = submerged ? -8.f : -25.f;
             break;
         }
         case MovementMode::FLYING:
