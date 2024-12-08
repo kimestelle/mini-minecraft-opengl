@@ -152,18 +152,6 @@ void MyGL::paintGL() {
     postProcessFBO.bindFrameBuffer();
     glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
 
-    // Allocate buffer to read pixels
-    std::vector<unsigned char> pixels(width() * this->devicePixelRatio() * height() * this->devicePixelRatio() * 4);
-
-    // Read pixels from the framebuffer
-    glReadPixels(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio(), GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
-
-    // Check if pixels are non-zero
-    bool hasNonZeroPixels = std::any_of(pixels.begin(), pixels.end(),
-                                        [](unsigned char val) { return val != 0; });
-
-    qDebug() << "Framebuffer has non-zero pixels:" << hasNonZeroPixels;
-
     // Clear the screen so that we only see newly drawn images
     glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -183,7 +171,7 @@ void MyGL::paintGL() {
 
     glDisable(GL_DEPTH_TEST);
     m_progFlat.setUnifMat4("u_Model", glm::mat4());
-    m_progFlat.drawOpq(m_worldAxes);
+    // m_progFlat.drawOpq(m_worldAxes);
     glEnable(GL_DEPTH_TEST);
 
     // draw post process
@@ -196,7 +184,7 @@ void MyGL::paintGL() {
     printGLErrorLog();
     // Place the texture that stores the image of the 3D render
     // into texture slot 0
-    postProcessFBO.bindToTextureSlot(1);
+    postProcessFBO.bindToTextureSlot(0);
     printGLErrorLog();
 
     // Set the sampler2D in the post-process shader to
