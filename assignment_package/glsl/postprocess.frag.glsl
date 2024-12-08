@@ -17,7 +17,7 @@ void main()
         color_noA = color_noA * 0.8 + vec3(0.0, 0.0, 1.0) * 0.2;
     } else if (u_PostEffect == 2) {
         // lava, tint orange
-        color_noA = color_noA * 0.8 + vec3(0.66, 0.33, 0.0) * 0.2;
+        color_noA = color_noA * 0.2 + vec3(1.0f, 0.5, 0.0) * 0.8;
     }
     out_Col = vec4(color_noA, 1.0);
 }

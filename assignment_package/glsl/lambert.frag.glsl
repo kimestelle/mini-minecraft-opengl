@@ -31,7 +31,7 @@ void main()
     // Material base color (before shading)
     // vec4 diffuseColor = fs_Col;
     if (fs_UV.z == 2.0) { // lava
-        uv.y += mod(u_Time * 0.0007, 1.0 / 16.0);
+        uv.x += mod(u_Time * 0.0007, 1.0 / 16.0);
     } else if (fs_UV.z == 1.0) { // water
         uv.x += mod(u_Time * 0.001, 1.0 / 16.0);
     }

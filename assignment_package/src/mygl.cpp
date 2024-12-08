@@ -186,9 +186,8 @@ void MyGL::paintGL() {
     //redirect to postprocess
     postProcessFBO.bindFrameBuffer();
     glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
-
+    glClearColor(0.37f, 0.74f, 1.0f, 1);
     // Clear the screen so that we only see newly drawn images
-    glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
@@ -384,7 +383,11 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             currPos.z = glm::round(currPos.z);
             currPos.z = ray.z >= 0 ? currPos.z + 0.01f : currPos.z - 0.01f;
         }
-        if (m_terrain.hasChunkAt(currPos.x, currPos.z) && m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z) != EMPTY) {
+        if (m_terrain.hasChunkAt(currPos.x, currPos.z)){
+            BlockType block = m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z);
+            if (block == EMPTY || block == WATER || block == LAVA) {
+                continue;
+            }
             switch (e->button()) {
                 case Qt::LeftButton:
                 std::cout << "remove block" << std::endl;
