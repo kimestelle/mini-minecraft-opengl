@@ -375,9 +375,10 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     //ERROR: WHEN DESTROYING THE BLOCK AT THE EDGE OF A CHUNK, WE DO NOT UPDATE THE VBO OF THE NEIGHBORING CHUNK
                     if (m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z) != BEDROCK) {
                         m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
-                        // m_terrain.getChunkAt(currPos.x, currPos.z)->destroyVBOdata();
                         m_terrain.getChunkAt(currPos.x, currPos.z)->createVBOdata();
-
+                        // m_terrain.getChunkAt(currPos.x, currPos.z)->loaded = false;
+                        // m_terrain.getChunkAt(currPos.x, currPos.z)->ready = true;
+                        // m_terrain.loadChunkVBOs();
                         // m_terrain.loadChunkVBOs();
                     }
                     break;

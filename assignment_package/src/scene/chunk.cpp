@@ -187,7 +187,6 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
     indices.push_back(vC + 0);
     indices.push_back(vC + 2);
     indices.push_back(vC + 3);
-
 }
 
 bool isTransparent(BlockType t) {
@@ -196,6 +195,12 @@ bool isTransparent(BlockType t) {
 
 void Chunk::generateVBOData() {
     std::cout << "Generating Data" << std::endl;
+
+    opq_interleavedData.clear();
+    trans_interleavedData.clear();
+    opq_indices.clear();
+    trans_indices.clear();
+
     int opq_faceCount = 0;
     int opq_vertexCount = 0;
 
@@ -335,7 +340,7 @@ void Chunk::loadToGPU() {
 
 void Chunk::createVBOdata() {
     generateVBOData();
-    loadToGPU();
+    // loadToGPU();
 }
 
 void Chunk::create() {

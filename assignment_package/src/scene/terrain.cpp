@@ -148,6 +148,7 @@ void Terrain::loadChunkVBOs() {
             value->working = false;
             auto x = value.get();
             auto f = [x]() {
+                std::cout << "Beginning VBO data Generation" << std::endl;
                 x->generateVBOData();
             };
 
@@ -156,7 +157,7 @@ void Terrain::loadChunkVBOs() {
         }
 
         if(value->working) { ///DONE WORKING
-            // std::cout << "Loading to GPU" << std::endl;
+            std::cout << "mew" << std::endl;
             value->loadToGPU();
             value->working = false;
             value->loaded = true;
