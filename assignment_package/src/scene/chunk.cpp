@@ -195,6 +195,7 @@ bool isTransparent(BlockType t) {
 }
 
 void Chunk::generateVBOData() {
+    std::cout << "Generating Data" << std::endl;
     int opq_faceCount = 0;
     int opq_vertexCount = 0;
 
@@ -206,6 +207,10 @@ void Chunk::generateVBOData() {
             for (int z = 0; z < 16; ++z) {
                 BlockType t = getLocalBlockAt(x, y, z);
                 glm::vec4 blockPos(x, y, z, 0);
+
+                if(x == 47 - minX && y == 130 && z == 45-minZ) {
+                    std::cout << "BlockType: " <<  t << std::endl;
+                }
 
                 if (t != EMPTY) {
                     BlockType x_pos = (x < 15) ? getLocalBlockAt(x + 1, y, z) : (m_neighbors[XPOS] ? m_neighbors[XPOS]->getLocalBlockAt(0, y, z) : EMPTY);

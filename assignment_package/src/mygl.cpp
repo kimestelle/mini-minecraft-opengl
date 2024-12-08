@@ -86,9 +86,9 @@ if (!QFile(":/textures/minecraft_textures_all.png").exists()){
 
     for(int i = -1; i <= 1; i++) {
         for(int j = -1; j <= 1; j++) {
-            // std::cout << x + i * 64 << ", " << z + j * 64 << std::endl;
+            std::cout << x + i * 64 << ", " << z + j * 64 << std::endl;
             m_terrain.GenerateTerrain(x + i * 64, z + j * 64);
-            // std::cout << "COokie" << std::endl;
+            std::cout << "COokie" << std::endl;
         }
     }
 
@@ -375,7 +375,10 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     //ERROR: WHEN DESTROYING THE BLOCK AT THE EDGE OF A CHUNK, WE DO NOT UPDATE THE VBO OF THE NEIGHBORING CHUNK
                     if (m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z) != BEDROCK) {
                         m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
+                        // m_terrain.getChunkAt(currPos.x, currPos.z)->destroyVBOdata();
                         m_terrain.getChunkAt(currPos.x, currPos.z)->createVBOdata();
+
+                        // m_terrain.loadChunkVBOs();
                     }
                     break;
                 case Qt::RightButton:
