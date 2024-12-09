@@ -5,7 +5,7 @@ SOURCES += \
     $$PWD/main.cpp \
     $$PWD/mainwindow.cpp \
     $$PWD/mygl.cpp \
-    $$PWD/scene/quad.cpp \
+    $$PWD/scene/skyQuad.cpp \
     $$PWD/shaderprogram.cpp \
     $$PWD/drawable.cpp \
     $$PWD/cameracontrolshelp.cpp \
@@ -23,7 +23,7 @@ SOURCES += \
 HEADERS += \
     $$PWD/mainwindow.h \
     $$PWD/mygl.h \
-    $$PWD/scene/quad.h \
+    $$PWD/scene/skyQuad.h \
     $$PWD/shaderprogram.h \
     $$PWD/drawable.h \
     $$PWD/cameracontrolshelp.h \

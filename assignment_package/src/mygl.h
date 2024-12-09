@@ -8,7 +8,7 @@
 #include "scene/terrain.h"
 #include "scene/player.h"
 #include "texture.h"
-#include "scene/quad.h"
+#include "scene/skyQuad.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
@@ -33,7 +33,7 @@ private:
     Terrain m_terrain; // All of the Chunks that currently comprise the world.
     Player m_player; // The entity controlled by the user. Contains a camera to display what it sees as well.
 
-    Quad m_quad;
+    SkyQuad m_quad;
 
     InputBundle m_inputs; // A collection of variables to be updated in keyPressEvent, mouseMoveEvent, mousePressEvent, etc.
 

@@ -1,7 +1,7 @@
 debug/main.o
 debug/mainwindow.o
 debug/mygl.o
-debug/quad.o
+debug/skyQuad.o
 debug/shaderprogram.o
 debug/drawable.o
 debug/cameracontrolshelp.o

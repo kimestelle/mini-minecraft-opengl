@@ -3,9 +3,9 @@
 #include "drawable.h"
 #include <glm_includes.h>
 
-class Quad : public Drawable {
+class SkyQuad : public Drawable {
 public:
-    Quad(OpenGLContext* context);
+    SkyQuad(OpenGLContext* context);
 
     void create();
     void createVBOdata() override;

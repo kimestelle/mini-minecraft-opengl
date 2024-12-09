@@ -1,9 +1,9 @@
-#include "quad.h"
+#include "skyQuad.h"
 #include "iostream"
 
-Quad::Quad(OpenGLContext* context) : Drawable(context) {}
+SkyQuad::SkyQuad(OpenGLContext* context) : Drawable(context) {}
 
-void Quad::create() {
+void SkyQuad::create() {
     // indices for two triangles in quad
     GLuint idx[6] = {0, 1, 2, 0, 2, 3};
 
@@ -33,6 +33,6 @@ void Quad::create() {
     }
 }
 
-void Quad::createVBOdata() {
+void SkyQuad::createVBOdata() {
     create();
 }
