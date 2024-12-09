@@ -1,8 +1,9 @@
-**For milestone 3, Estelle implemented a custom sky and fluid surface waves, Saahil implemented , and Jesse completed shadows and underater distortion post-processing.**
+**For milestone 3, Estelle implemented a custom sky and fluid surface waves, Saahil implemented additional biomes and procedurally placed assets, and Jesse completed shadows and underater distortion post-processing.**
 
 ## Estelle
 
 ## Saahil
+I implemented multiple biomes using a complex series of noise functions and maps, such that they blend neatly and have varying height fields. I also added procedurally placed trees and cacti throughout their respective biomes.
 
 ## Jesse
 First, I implemented shadow mapping. This involves creating a depth texture, and computing the orthographic depth of the terrain from the light perspective. Then, using this texture, I computed whether or not areas are in shadow by comparing their depth from the light vs the texture's closest depth. To make this look better, I worked it into lambert shading to still have ambient light, and implemented a slope-adjusted bias that adjusts the level of bias to face slopes in order to minimize artifacts and shadow acne. Lastly, I made it so that water and lava, due to their transparency, do not cast shadows. This isn't 100% perfect (still artifacts as shadow mapping/orthographic perspective has flaws), but captures the right effect.
