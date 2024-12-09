@@ -13,7 +13,7 @@ const float TWO_PI = 6.28318530718;
 const vec3 dawnSky[3] = vec3[](vec3(0.1, 0.08, 0.15), vec3(0.5, 0.4, 0.45), vec3(0.8, 0.7, 0.6));
 const vec3 morningSky[3] = vec3[](vec3(0.6, 0.7, 0.8), vec3(0.75, 0.8, 0.85), vec3(0.8, 0.85, 0.9));
 const vec3 noonSky[3] = vec3[](vec3(0.6, 0.8, 1.0), vec3(0.7, 0.9, 1.0), vec3(0.75, 0.95, 1.0));
-const vec3 sunsetSky[3] = vec3[](vec3(1.0, 0.5, 0.3), vec3(0.8, 0.4, 0.6), vec3(0.4, 0.2, 0.5));
+const vec3 sunsetSky[3] = vec3[](vec3(1.0, 0.5, 0.3), vec3(0.6, 0.3, 0.5), vec3(0.4, 0.2, 0.5));
 const vec3 nightSky[3] = vec3[](vec3(0.02, 0.02, 0.1), vec3(0.05, 0.05, 0.2), vec3(0.1, 0.1, 0.3));
 
 const vec3 dawnSun = vec3(1.0, 0.6, 0.4);
@@ -32,8 +32,9 @@ vec3 rayDirection(vec4 screenPos) {
 
 //functions to interpolate gradients using smoothstep
 vec3 gradient3(vec3 rayDir, const vec3 gradient[3]) {
-    float t = clamp(rayDir.y, 0.0, 1.0);
-    float stepSize = 1.0 / 2.0;
+    //cleaner transition
+    float t = smoothstep(-0.3, 0.3, rayDir.y);
+    float stepSize = 1.0 / 3.0;
     float smoothT = smoothstep(0.0, stepSize, t);
     if (t < stepSize) {
         return mix(gradient[0], gradient[1], smoothT);
@@ -74,9 +75,15 @@ vec3 sunColor(float time) {
 vec3 sunEffect(vec3 rayDir, vec3 sunDir, vec3 sunBaseColor) {
     float sunSize = 0.15;
     float outerGlowSize = 0.3;
+
+    //angle in radians
+    float angle = acos(dot(rayDir, sunDir));
+    //bigger as it nears horizon
+    float sizeFactor = smoothstep(PI * 0.25, PI * 0.5, angle);
+    sunSize = mix(0.15, 0.3, sizeFactor);
     //when ray direction is aligned to sun direction, player is looking at sun
     float sunIntensity = exp(-pow(length(rayDir - sunDir) / sunSize, 2.0));
-    float glowIntensity = exp(-pow(length(rayDir - sunDir) / outerGlowSize, 2.0));
+    float glowIntensity = exp(-pow(length(rayDir - sunDir) / outerGlowSize, 2.0)) * sizeFactor;
     vec3 outerGlowColor = mix(sunBaseColor, vec3(1.0, 0.8, 0.6), 0.3);
     return sunIntensity * sunBaseColor + glowIntensity * outerGlowColor;
 }

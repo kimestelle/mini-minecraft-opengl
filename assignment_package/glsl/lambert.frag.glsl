@@ -34,6 +34,7 @@ void main()
     if (fs_UV.z == 2.0) { // lava
         uv.y += mod(u_Time * 0.0007, 1.0 / 16.0); //vertical movement
     } else if (fs_UV.z == 1.0) { // water
+        vec4 texColor = texture(u_Texture, uv);
         uv.x += mod(u_Time * 0.002, 1.0 / 10.0); //horizontal movement
 
         //blinn-phong
@@ -51,7 +52,7 @@ void main()
         vec3 specular = pow(max(dot(H, N), 0.0), exp) * vec3(1.0);
 
         vec3 finalColor = ambient + diffuse + specular;
-        out_Col = vec4(finalColor, 1.0);
+        out_Col = vec4(finalColor, texColor.a);
 
         return;
     }
