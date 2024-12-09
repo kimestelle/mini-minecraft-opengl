@@ -14,7 +14,7 @@
 uniform vec4 u_Color = vec4(0.0, 1.0, 0.0, 1.0); // The color with which to render this instance of geometry.
 uniform sampler2D u_Texture;
 uniform float u_Time;
-uniform sampler2DShadow u_ShadowMap;
+uniform sampler2D u_ShadowMap;
 
 // These are the interpolated values out of the rasterizer, so you can't know
 // their specific values without knowing the vertices that contributed to them
@@ -39,7 +39,7 @@ void main()
     }
 
     vec4 texColor = texture(u_Texture, uv);
-    float visibility = texture( u_ShadowMap, vec3(fs_ShadowPos.xy, (fs_ShadowPos.z)/fs_ShadowPos.w ));
+    float visibility = texture( u_ShadowMap, fs_ShadowPos.xy).z < fs_ShadowPos.z-.005f ? 0.5 : 1.0;
 
     // Calculate the diffuse term for Lambert shading
     float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
