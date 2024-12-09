@@ -7,8 +7,10 @@
 #include "scene/camera.h"
 #include "scene/terrain.h"
 #include "scene/player.h"
+#include "framebuffer.h"
 #include "texture.h"
 #include "scene/skyQuad.h"
+#include "scene/quad.h"
 
 #include <QOpenGLVertexArrayObject>
 #include <QOpenGLShaderProgram>
@@ -48,6 +50,10 @@ private:
     void sendPlayerDataToGUI() const;
 
     qint64 m_lastTime; // Used to calculate dT in tick().
+
+    ShaderProgram progPostProcess; // shader for application of post-process
+    FrameBuffer postProcessFBO; // framebuffer for post-process
+    Quad quadDrawable;
 
 
 public:

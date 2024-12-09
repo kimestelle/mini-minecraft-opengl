@@ -2,6 +2,7 @@
 #include "smartpointerhelp.h"
 #include "glm_includes.h"
 #include <array>
+#include <mutex>
 #include <unordered_map>
 #include <cstddef>
 
@@ -16,7 +17,7 @@
 // block types, but in the scope of this project we'll never get anywhere near that many.
 enum BlockType : unsigned char
 {
-    EMPTY, GRASS, DIRT, STONE, WATER, SNOW, LAVA
+    EMPTY, GRASS, DIRT, STONE, WATER, SNOW, LAVA, BEDROCK
 };
 
 // The six cardinal directions in 3D space
@@ -53,8 +54,21 @@ private:
     // a key for this map.
     // These allow us to properly determine
     std::unordered_map<Direction, Chunk*, EnumHash> m_neighbors;
+    std::mutex blockMutex;
+
+
+
+    std::vector<GLuint> opq_indices;
+    std::vector<glm::vec4> opq_interleavedData;
+
+    std::vector<GLuint> trans_indices;
+    std::vector<glm::vec4> trans_interleavedData;
 
 public:
+    bool ready;
+    bool loaded;
+    bool working;
+
     Chunk(int x, int z, OpenGLContext* context);
     static std::unordered_map<BlockType, glm::vec2> blockUVs;
     static glm::vec2 getUV(BlockType t, Direction dir);
@@ -62,13 +76,14 @@ public:
     void create();
     void generateVBOData();
     void loadVBO();
+    void loadToGPU();
     void updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, const glm::vec4& pos, BlockType t, int vC, std::vector<GLuint>& indices);
 
     void createVBOdata() override;
     GLenum drawMode() override { return GL_TRIANGLES; }
 
-    BlockType getLocalBlockAt(unsigned int x, unsigned int y, unsigned int z) const;
-    BlockType getLocalBlockAt(int x, int y, int z) const;
+    BlockType getLocalBlockAt(unsigned int x, unsigned int y, unsigned int z);
+    BlockType getLocalBlockAt(int x, int y, int z) ;
     void setLocalBlockAt(unsigned int x, unsigned int y, unsigned int z, BlockType t);
     void linkNeighbor(uPtr<Chunk>& neighbor, Direction dir);
 };
