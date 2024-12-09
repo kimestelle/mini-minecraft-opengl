@@ -230,7 +230,9 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
     if(m_generatedTerrain.count(toKey(xPos, zPos)) > 0) {
         return;
     }
-
+    if(m_generatedTerrain.find(toKey(xPos, zPos)) != m_generatedTerrain.end()) {
+        return;
+    }
     m_generatedTerrain.insert(toKey(xPos, zPos));
 
     int WinChunks = 4;

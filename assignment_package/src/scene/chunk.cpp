@@ -127,7 +127,15 @@ std::unordered_map<BlockType, std::unordered_map<Direction, glm::vec2>> blockUVM
               {YNEG, glm::vec2(3, 11)},
               {ZPOS, glm::vec2(3, 11)},
               {ZNEG, glm::vec2(3, 11)},
-              }}
+              }},
+    {BEDROCK, {
+              {XPOS, glm::vec2(1, 14)},
+              {XNEG, glm::vec2(1, 14)},
+              {YPOS, glm::vec2(1, 14)},
+              {YNEG, glm::vec2(1, 14)},
+              {ZPOS, glm::vec2(1, 14)},
+              {ZNEG, glm::vec2(1, 14)},
+              }},
 };
 
 
