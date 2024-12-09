@@ -119,6 +119,14 @@ std::unordered_map<BlockType, std::unordered_map<Direction, glm::vec2>> blockUVM
               {YNEG, glm::vec2(5, 11)},
               {ZPOS, glm::vec2(6, 11)},
               {ZNEG, glm::vec2(6, 11)},
+              }},
+    {ICE, {
+              {XPOS, glm::vec2(3, 11)},
+              {XNEG, glm::vec2(3, 11)},
+              {YPOS, glm::vec2(3, 11)},
+              {YNEG, glm::vec2(3, 11)},
+              {ZPOS, glm::vec2(3, 11)},
+              {ZNEG, glm::vec2(3, 11)},
               }}
 };
 
@@ -226,7 +234,7 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
 }
 
 bool isTransparent(BlockType t) {
-    return t == WATER || t == CACTUS ;
+    return t == WATER || t == CACTUS || t == ICE;
 }
 
 void Chunk::generateVBOData() {

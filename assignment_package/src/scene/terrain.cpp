@@ -413,6 +413,32 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                             }
 
                             float amp = (0.333f / 2.0f) - temp;
+
+                            float threshold = (80 * amp * terrain_perlin) + 139;
+
+                            if (y <= threshold) {
+                                setGlobalBlockAt(x, y, z, SAND);
+                                if(y+1 > threshold) {
+                                    if (x % 10 == (int)(threshold) % 10 && z % 10 == (int)(threshold) % 10) {
+                                        setGlobalBlockAt(x, y+1, z, CACTUS);
+                                        setGlobalBlockAt(x, y+2, z, CACTUS);
+                                        setGlobalBlockAt(x, y+3, z, CACTUS);
+                                        if (x % 10 > 4) {
+                                            setGlobalBlockAt(x, y+4, z, CACTUS);
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (terrainPercent < 0.666f) {
+                            //     //Sand
+                            // std::cout << "B " << x << ", " << z << std::endl;
+                            float temp = (terrainPercent - (0.333f * 1.5));
+                            if (temp < 0) {
+                                temp = -temp;
+                            }
+
+                            float amp = (0.333f / 2.0f) - temp;
+
                             float threshold = (80 * amp * terrain_perlin) + 139;
 
                             if (y <= threshold) {
@@ -462,31 +488,8 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                                     setGlobalBlockAt(x, y, z, DIRT);
                                 }
                             }
-                        } else if (terrainPercent < 0.666f) {
-                            //     //Sand
-                            // std::cout << "B " << x << ", " << z << std::endl;
-                            float temp = (terrainPercent - (0.333f * 1.5));
-                            if (temp < 0) {
-                                temp = -temp;
-                            }
 
-                            float amp = (0.333f / 2.0f) - temp;
 
-                            float threshold = (80 * amp * terrain_perlin) + 139;
-
-                            if (y <= threshold) {
-                                setGlobalBlockAt(x, y, z, SAND);
-                                if(y+1 > threshold) {
-                                    if (x % 10 == (int)(threshold) % 10 && z % 10 == (int)(threshold) % 10) {
-                                        setGlobalBlockAt(x, y+1, z, CACTUS);
-                                        setGlobalBlockAt(x, y+2, z, CACTUS);
-                                        setGlobalBlockAt(x, y+3, z, CACTUS);
-                                        if (x % 10 > 4) {
-                                            setGlobalBlockAt(x, y+4, z, CACTUS);
-                                        }
-                                    }
-                                }
-                            }
                         } else {
                             //     //Snowy Mountains
 
@@ -503,7 +506,7 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                                 if(y + 1 > threshold) {
                                     setGlobalBlockAt(x, y, z, SNOW);
                                 } else {
-                                    setGlobalBlockAt(x, y, z, STONE);
+                                    setGlobalBlockAt(x, y, z, ICE);
                                 }
                             }
                         }
