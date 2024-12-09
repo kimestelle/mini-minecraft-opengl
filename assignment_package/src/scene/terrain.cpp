@@ -220,93 +220,9 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
 }
 
 
-void Terrain::CreateTestScene() {
-    // TODO: DELETE THIS LINE WHEN YOU DELETE m_geomCube!
-
-    // Create the Chunks that will
-    // store the blocks for our
-    // initial world space
-
-    // for(int x = 0; x < 64; x += 16) {
-    //     for(int z = 0; z < 64; z += 16) {
-            instantiateChunkAt(0, 0);
-    //     }
-    // }
-    // Tell our existing terrain set that
-    // the "generated terrain zone" at (0,0)
-    // now exists.
-    m_generatedTerrain.insert(toKey(0, 0));
-
-    // Create the basic terrain floor
-    // for(int x = 0; x < 64; ++x) {
-    //     for(int z = 0; z < 64; ++z) {
-    //         if((x + z) % 2 == 0) {
-    //             setGlobalBlockAt(x, 128, z, STONE);
-    //         }
-    //         else {
-    //             setGlobalBlockAt(x, 128, z, DIRT);
-    //         }
-    //     }
-    // }
-    // // Add "walls" for collision testing
-    // for(int x = 0; x < 64; ++x) {
-    //     setGlobalBlockAt(x, 129, 16, GRASS);
-    //     setGlobalBlockAt(x, 130, 16, GRASS);
-    //     setGlobalBlockAt(x, 129, 48, GRASS);
-    //     setGlobalBlockAt(16, 130, x, GRASS);
-    // }
-    // // Add a central column
-    // for(int y = 129; y < 140; ++y) {
-    //     setGlobalBlockAt(32, y, 32, GRASS);
-    // }
-
-    setGlobalBlockAt(0, 128, 0, WATER);
-    setGlobalBlockAt(1, 128, 0, GRASS);
-
-
-    //create vbo data
-    for(int x = 0; x < 64; x += 16) {
-        for(int z = 0; z < 64; z += 16) {
-            if (hasChunkAt(x, z)) {
-                getChunkAt(x, z)->createVBOdata();
-            }
-        }
-    }
-
-
-}
-
-//function to expand terrain based on player position
-// void Terrain::expandTerrainIfNeeded(const glm::vec3 &playerPos) {
-//     int xCenter = ((int)playerPos.x) - ((int)playerPos.x % 16);
-//     int zCenter = ((int)playerPos.z) - ((int)playerPos.z % 16);
-
-//     for(int i = -1; i <= 1; i++) {
-//         for (int j = -1; j <= 1; j++) {
-//             if(!hasChunkAt(xCenter + i * 16, zCenter + j * 16)) {
-//                 // std::cout << "expanding Terrain" << std::endl;
-//                 instantiateChunkAt(xCenter + i * 16, zCenter + j * 16);
-//             }
-//         }
-//     }
-
-//     xCenter = ((int)playerPos.x) - ((int)playerPos.x % 64);
-//     zCenter = ((int)playerPos.z) - ((int)playerPos.z % 64);
-
-//     for(int i = -1; i <= 1; i++) {
-//         for (int j = -1; j <= 1; j++) {
-//             int c = m_generatedTerrain.count(toKey(xCenter + 64*i, zCenter + 64 * j));
-//             if (c == 0) {
-//                 // std::cout << "expanding generation" << std::endl;
-//                 m_generatedTerrain.insert(toKey(xCenter + 64*i, zCenter + 64 * j));
-//             }
-//         }
-//     }
-// }
-
-
 float PerlinNoise(float x, float y, float z);
 float voronoiNoise(const glm::vec2& position, int seed);
+float noise(int x, int y) ;
 
 
 void Terrain::GenerateTerrain(int xPos, int zPos)  {
@@ -342,33 +258,6 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
     // Create the basic terrain floor
     for (int x = xPos; x < 16*WinChunks + xPos; x++) {
         for (int z = zPos; z < 16*WinChunks + zPos; z++) {
-
-            // float max = 0;
-            // float noiseVal = 0.0f;
-
-            // for (int i = 0; i < 4; i++) {
-            //     float lacunarity = glm::pow(2.0f, (float)i);
-            //     float persistance = glm::pow(0.6f, (float)i);
-            //     max += persistance;
-
-            //     noiseVal += persistance * PerlinNoise(x * 0.007 * lacunarity, 20.12 * i, z * 0.007 * lacunarity);
-            // }
-
-            // noiseVal /= max;
-            // noiseVal -= 0.2;
-            // noiseVal = glm::max(0.0f, noiseVal);
-            // noiseVal *= (noiseVal * 0.8f);
-
-
-            // noiseVal *= 40;
-            // noiseVal += 129;
-
-            // if (vNoise > 0.2f) {
-            //     if(noiseVal <= 155.0f) {
-            //         float separator = noiseVal - 129;
-            //         noiseVal = 155 - (separator / 35.0f);
-            //     }
-            // }
 
             const float typeTerrain = 40 * PerlinNoise(x * 0.003, 12, z * 0.003) + 129;
             const float terrain_perlin = PerlinNoise(x * 0.02, 12.23, z * 0.02);
@@ -430,7 +319,7 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                                 }
                             }
                         } else if (terrainPercent < 0.666f) {
-                            //     //Sand
+                            //     //Grass
                             // std::cout << "B " << x << ", " << z << std::endl;
                             float temp = (terrainPercent - (0.333f * 1.5));
                             if (temp < 0) {
@@ -444,45 +333,48 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                             if (y <= threshold) {
                                 if(y + 1 > threshold) {
                                     setGlobalBlockAt(x, y, z, GRASS);
-                                    if (x % 10 == (int)(threshold) % 10 && z % 10 == (int)(threshold) % 10) {
+                                    if (noise(x, z) > 0.97f) {
+
                                         bool ctd = true;
-                                        for(int i = -2; i < 2; i++) {
-                                            for(int j = -2; j < 2; j++) {
-                                                if (!hasChunkAt(x + i, z + j)) {
+                                        for(int i = -2; i <= 2; i++) {
+                                            for(int j = -2; j <= 2; j++) {
+                                                if (!hasChunkAt(x + i, z + j) || noise(x+i, z+j) > 0.99f) {
                                                     ctd = false;
                                                 }
                                             }
                                         }
 
-                                        if(!ctd) {
-                                            continue;
-                                        }
+                                        if(ctd) {
+                                            setGlobalBlockAt(x, y+1, z, WOOD);
+                                            setGlobalBlockAt(x, y+2, z, WOOD);
+                                            setGlobalBlockAt(x, y+3, z, WOOD);
+                                            setGlobalBlockAt(x, y+4, z, WOOD);
+                                            setGlobalBlockAt(x, y+5, z, WOOD);
+                                            setGlobalBlockAt(x, y+6, z, WOOD);
+                                            setGlobalBlockAt(x, y+7, z, LEAVES);
 
-                                        setGlobalBlockAt(x, y+1, z, WOOD);
-                                        setGlobalBlockAt(x, y+2, z, WOOD);
-                                        setGlobalBlockAt(x, y+3, z, WOOD);
-                                        setGlobalBlockAt(x, y+4, z, WOOD);
-                                        setGlobalBlockAt(x, y+5, z, LEAVES);
+                                            for(int i = -2; i <= 2; i++) {
+                                                for(int j = -2; j <= 2; j++) {
+                                                    if (i == 0  && j == 0) {
+                                                        continue;
+                                                    }
 
-                                        for(int i = -2; i < 2; i++) {
-                                            for(int j = -2; j < 2; j++) {
-                                                if (i == 0  && j == 0) {
-                                                    continue;
+                                                    setGlobalBlockAt(x+i, y+4, z+j, LEAVES);
                                                 }
+                                            }
 
-                                                setGlobalBlockAt(x+i, y+3, z+j, LEAVES);
+                                            for(int i = -1; i <= 1; i++) {
+                                                for(int j = -1; j <= 1; j++) {
+                                                    if (i == 0  && j == 0) {
+                                                        continue;
+                                                    }
+
+                                                    setGlobalBlockAt(x+i, y+6, z+j, LEAVES);
+                                                }
                                             }
                                         }
 
-                                        for(int i = -1; i < 1; i++) {
-                                            for(int j = -1; j < 1; j++) {
-                                                if (i == 0  && j == 0) {
-                                                    continue;
-                                                }
 
-                                                setGlobalBlockAt(x+i, y+4, z+j, LEAVES);
-                                            }
-                                        }
                                     }
                                 } else {
                                     setGlobalBlockAt(x, y, z, DIRT);
@@ -505,6 +397,52 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                             if (y <= threshold) {
                                 if(y + 1 > threshold) {
                                     setGlobalBlockAt(x, y, z, SNOW);
+
+                                    if (noise(x, z) > 0.97f) {
+
+                                        bool ctd = true;
+                                        for(int i = -2; i <= 2; i++) {
+                                            for(int j = -2; j <= 2; j++) {
+                                                if (!hasChunkAt(x + i, z + j) || noise(x+i, z+j) > 0.97f) {
+                                                    ctd = false;
+                                                }
+                                            }
+                                        }
+
+                                        if(!ctd) {
+                                            break;
+                                        }
+
+                                        if(ctd) {
+                                            setGlobalBlockAt(x, y+1, z, WOOD);
+                                            setGlobalBlockAt(x, y+2, z, WOOD);
+                                            setGlobalBlockAt(x, y+3, z, WOOD);
+                                            setGlobalBlockAt(x, y+4, z, WOOD);
+                                            setGlobalBlockAt(x, y+5, z, WOOD);
+                                            setGlobalBlockAt(x, y+6, z, WOOD);
+                                            setGlobalBlockAt(x, y+7, z, LEAVES);
+
+                                    //         for(int i = -2; i <= 2; i++) {
+                                    //             for(int j = -2; j <= 2; j++) {
+                                    //                 if (i == 0  && j == 0) {
+                                    //                     continue;
+                                    //                 }
+
+                                    //                 setGlobalBlockAt(x+i, y+4, z+j, LEAVES);
+                                    //             }
+                                    //         }
+
+                                            for(int i = -1; i <= 1; i++) {
+                                                for(int j = -1; j <= 1; j++) {
+                                                    if (i == 0  && j == 0) {
+                                                        continue;
+                                                    }
+
+                                                    setGlobalBlockAt(x+i, y+6, z+j, LEAVES);
+                                                }
+                                            }
+                                        }
+                                    }
                                 } else {
                                     setGlobalBlockAt(x, y, z, ICE);
                                 }
@@ -627,7 +565,11 @@ float PerlinNoise(float x, float y, float z) {
 
 
 
-
+float noise(int x, int y) {
+    x = (y << 13) ^ x;
+    uint32_t hash = (x * (y * x * 15731 + 789221) + 1376312589) & 0x7fffffff;
+    return static_cast<float>(hash) / static_cast<float>(0x7fffffff);
+}
 
 
 
