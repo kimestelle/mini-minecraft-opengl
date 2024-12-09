@@ -39,7 +39,7 @@ void main()
     }
 
     vec4 texColor = texture(u_Texture, uv);
-    float visibility = texture( u_ShadowMap, fs_ShadowPos.xy).z < fs_ShadowPos.z-.005f ? 0.5 : 1.0;
+    float visibility = texture( u_ShadowMap, fs_ShadowPos.xy).z < fs_ShadowPos.z+.005f ? 0.5 : 1.0;
 
     // Calculate the diffuse term for Lambert shading
     float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
@@ -54,5 +54,6 @@ void main()
     //lit by our point light are not completely black.
 
     // Compute final shaded color
-    out_Col = vec4(texColor.rgb * lightIntensity, texColor.a);
+    // out_Col = vec4(texColor.rgb * lightIntensity, texColor.a);
+    out_Col = vec4(fs_ShadowPos.xy, 0, 1);
 }
