@@ -14,12 +14,13 @@ MyGL::MyGL(QWidget *parent)
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_texture(this),
       m_terrain(this), m_player(glm::vec3(48.f, 130.f, 48.f), m_terrain),
-      m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch()),
+      m_inputs(), m_timer(), m_startTime(QDateTime::currentMSecsSinceEpoch()),
+      m_lastTime(QDateTime::currentMSecsSinceEpoch()),
       progPostProcess(this),
       postProcessFBO(this, width(), height(), this->devicePixelRatio()),
       quadDrawable(this),
       progShadows(this),
-      shadowFBO(this, 4096/this->devicePixelRatio(), 4096/this->devicePixelRatio(), this->devicePixelRatio())
+      shadowFBO(this, 8192/this->devicePixelRatio(), 8192/this->devicePixelRatio(), this->devicePixelRatio())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -118,7 +119,7 @@ void MyGL::resizeGL(int w, int h) {
     postProcessFBO.destroy();
     postProcessFBO.create();
 
-    shadowFBO.resize(4096/this->devicePixelRatio(), 4096/this->devicePixelRatio(), this->devicePixelRatio());
+    shadowFBO.resize(8192/this->devicePixelRatio(), 8192/this->devicePixelRatio(), this->devicePixelRatio());
     shadowFBO.destroy();
     shadowFBO.create();
 
@@ -193,9 +194,9 @@ void MyGL::sendPlayerDataToGUI() const {
 // so paintGL() called at a rate of 60 frames per second.
 void MyGL::paintGL() {
     //bind to shadow mapping setup
-    glm::vec3 lightInvDir = glm::vec3(400, 200, 0);
+    glm::vec3 lightInvDir = glm::vec3(200, 150, 0);
     shadowFBO.bindFrameBuffer();
-    glViewport(0, 0, 4096, 4096);
+    glViewport(0, 0, 8192, 8192);
     glClearColor(1.f, 1.f, 1.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -205,13 +206,11 @@ void MyGL::paintGL() {
     glm::mat4 depthModelMatrix = glm::mat4(1.0);
     glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * depthModelMatrix;
 
-
-
-
     progShadows.setUnifMat4("u_DepthMVP", depthMVP);
+    glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
     renderTerrain(progShadows);
-    glCullFace(GL_BACK);
+    glDisable(GL_CULL_FACE);
 
     glm::mat4 biasMatrix(
         0.5, 0.0, 0.0, 0.0,
@@ -243,7 +242,8 @@ void MyGL::paintGL() {
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
 
     m_progLambert.setUnifFloat("u_Time", m_time++);
-    progPostProcess.setUnifFloat("u_Time", m_time);
+
+    progPostProcess.setUnifFloat("u_Time", (QDateTime::currentMSecsSinceEpoch() - m_startTime) / 1000.f);
 
     renderTerrain(m_progLambert);
 
@@ -272,6 +272,7 @@ void MyGL::paintGL() {
 
     this->glUniform1i(progPostProcess.m_unifs["u_Texture"],
                        postProcessFBO.getTextureSlot());
+    progPostProcess.setUnifVec2("u_Resolution", glm::vec2(this->width() * this->devicePixelRatio(), this->height() * this->devicePixelRatio()));
 
     // Check camera position to determine post process effect
     if (m_terrain.hasChunkAt(m_player.mcr_position.x, m_player.mcr_position.z)) {
