@@ -74,7 +74,7 @@ void MyGL::initializeGL()
     progShadows.create(":/glsl/shadows.vert.glsl", ":/glsl/shadows.frag.glsl");
 
     postProcessFBO.create();
-    shadowFBO.create();
+    shadowFBO.create(true);
 
 if (!QFile(":/textures/minecraft_textures_all.png").exists()){
         std::cerr << "error: tex file not found" << std::endl;
@@ -194,7 +194,7 @@ void MyGL::sendPlayerDataToGUI() const {
 void MyGL::paintGL() {
     //bind to shadow mapping setup
     glm::vec3 lightInvDir = glm::vec3(100, 258, 0);
-    // shadowFBO.bindFrameBuffer();
+    shadowFBO.bindFrameBuffer();
     glViewport(0, 0, 1024, 1024);
     glClearColor(1.f, 1.f, 1.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

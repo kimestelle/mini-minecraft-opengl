@@ -1,8 +1,8 @@
 #version 330 core
 
-out float fs_Depth;
+out vec4 fs_Depth;
 
 void main()
 {
-    fs_Depth = gl_FragCoord.z;
+    fs_Depth = vec4(gl_FragCoord.z, gl_FragCoord.z, gl_FragCoord.z, 1.0);
 }

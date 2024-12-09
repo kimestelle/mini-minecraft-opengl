@@ -55,5 +55,6 @@ void main()
 
     // Compute final shaded color
     // out_Col = vec4(texColor.rgb * lightIntensity, texColor.a);
-    out_Col = vec4(fs_ShadowPos.xy, 0, 1);
+    // out_Col = vec4(fs_ShadowPos.xy, 0, 1);
+    // out_Col = vec4(texture(u_ShadowMap, fs_ShadowPos.xy).xyz, 1);
 }
