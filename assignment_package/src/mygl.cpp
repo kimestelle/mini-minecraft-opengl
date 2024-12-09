@@ -12,9 +12,10 @@
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
-      m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_texture(this),
+    m_progLambert(this), m_progFlat(this), m_progSky(this), m_progInstanced(this), m_texture(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
-      m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch()),
+    m_quad(this),
+    m_inputs(), m_timer(), m_time(0.f), m_lastTime(QDateTime::currentMSecsSinceEpoch())
       progPostProcess(this),
       postProcessFBO(this, width(), height(), this->devicePixelRatio()),
       quadDrawable(this)
@@ -70,8 +71,10 @@ void MyGL::initializeGL()
     // m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
     progPostProcess.create(":/glsl/passthrough.vert.glsl", ":/glsl/postprocess.frag.glsl");
     postProcessFBO.create();
-
     progPostProcess.addUniform("u_Texture");
+
+    m_progSky.create(":/glsl/sky.vert.glsl", ":/glsl/sky.frag.glsl");
+
 if (!QFile(":/textures/minecraft_textures_all.png").exists()){
         std::cerr << "error: tex file not found" << std::endl;
     } else {
@@ -91,6 +94,12 @@ if (!QFile(":/textures/minecraft_textures_all.png").exists()){
             // std::cout << "COokie" << std::endl;
         }
     }
+    //create sky quad
+    m_quad.create();
+
+    // glBindVertexArray(0);
+    // glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
@@ -109,6 +118,11 @@ void MyGL::resizeGL(int w, int h) {
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
+
+    //position sky
+    glm::mat4 viewProjInv = glm::inverse(viewproj);
+    m_progSky.setUnifMat4("u_ViewProjInv", viewProjInv);
+    m_progSky.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
 
     printGLErrorLog();
 }
@@ -187,12 +201,25 @@ void MyGL::paintGL() {
     // Clear the screen so that we only see newly drawn images
     // glClearColor(0.f, 0.f, 0.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);
-
     glm::mat4 viewproj = m_player.mcr_camera.getViewProj();
+
+    glDisable(GL_CULL_FACE);
+    // glDisable(GL_DEPTH_TEST);
+
+    m_progSky.useMe();
+    glm::mat4 viewProjInv = glm::inverse(viewproj);
+    m_progSky.setUnifMat4("u_ViewProjInv", viewProjInv);
+    m_progSky.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
+    m_progSky.drawSky(m_quad);
+    m_progSky.setUnifFloat("u_Time", m_time);
+
+    // glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+  
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
     m_progLambert.setUnifMat4("u_Model", glm::mat4());
     m_progLambert.setUnifMat4("u_ModelInvTr", glm::mat4());
+    m_progLambert.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
 
