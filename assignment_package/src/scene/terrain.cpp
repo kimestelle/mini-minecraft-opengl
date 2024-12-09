@@ -370,7 +370,7 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
             //     }
             // }
 
-            const float typeTerrain = 40 * PerlinNoise(x * 0.004, 12, z * 0.004) + 129;
+            const float typeTerrain = 40 * PerlinNoise(x * 0.003, 12, z * 0.003) + 129;
             const float terrain_perlin = PerlinNoise(x * 0.02, 12.23, z * 0.02);
 
             for(int y = 0; y < 256; y++) {
@@ -500,7 +500,7 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                             float amp = (0.333f / 2.0f) - temp;
 
 
-                            float threshold = 240 * amp * terrain_perlin + 139;
+                            float threshold = 360 * amp * terrain_perlin + 139;
 
                             if (y <= threshold) {
                                 if(y + 1 > threshold) {
