@@ -258,6 +258,7 @@ void MyGL::paintGL() {
     m_progSky.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
     m_progSky.drawSky(m_quad);
     m_progSky.setUnifFloat("u_Time", m_time);
+    m_progSky.setUnifVec2("u_Resolution", glm::vec2(this->width() * this->devicePixelRatio(), this->height() * this->devicePixelRatio()));
 
     // glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
