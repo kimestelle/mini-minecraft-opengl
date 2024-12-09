@@ -2,7 +2,7 @@
 #include <iostream>
 
 Chunk::Chunk(int x, int z, OpenGLContext* context) : Drawable(context), m_blocks(), minX(x), minZ(z), m_neighbors{{XPOS, nullptr}, {XNEG, nullptr}, {ZPOS, nullptr}, {ZNEG, nullptr}},
-ready(false),
+blockMutex(), ready(false),
     loaded(false),
     working(false)
 {
