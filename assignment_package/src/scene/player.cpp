@@ -2,18 +2,18 @@
 #include <QString>
 
 const glm::vec3 Player::corners[12] = {
-    glm::vec3(-0.5f, 0.f, -0.5f),
-    glm::vec3(-0.5f, 0.f, 0.5f),
-    glm::vec3(-0.5f, 2.0f, -0.5f),
-    glm::vec3(-0.5f, 2.0f, 0.5f),
-    glm::vec3(-0.5f, 1.0f, -0.5f),
-    glm::vec3(-0.5f, 1.0f, 0.5f),
-    glm::vec3(0.5f, 0.f, -0.5f),
-    glm::vec3(0.5f, 0.f, 0.5f),
-    glm::vec3(0.5f, 2.0f, -0.5f),
-    glm::vec3(0.5f, 2.0f, 0.5f),
-    glm::vec3(0.5f, 1.0f, -0.5f),
-    glm::vec3(0.5f, 1.0f, 0.5f)
+    0.9f * glm::vec3(-0.5f, 0.f, -0.5f),
+    0.9f * glm::vec3(-0.5f, 0.f, 0.5f),
+   0.9f *  glm::vec3(-0.5f, 2.0f, -0.5f),
+    0.9f * glm::vec3(-0.5f, 2.0f, 0.5f),
+    0.9f * glm::vec3(-0.5f, 1.0f, -0.5f),
+    0.9f * glm::vec3(-0.5f, 1.0f, 0.5f),
+   0.9f *  glm::vec3(0.5f, 0.f, -0.5f),
+    0.9f * glm::vec3(0.5f, 0.f, 0.5f),
+   0.9f *  glm::vec3(0.5f, 2.0f, -0.5f),
+   0.9f *  glm::vec3(0.5f, 2.0f, 0.5f),
+    0.9f * glm::vec3(0.5f, 1.0f, -0.5f),
+    0.9f * glm::vec3(0.5f, 1.0f, 0.5f)
 };
 
 Player::Player(glm::vec3 pos, Terrain &terrain)

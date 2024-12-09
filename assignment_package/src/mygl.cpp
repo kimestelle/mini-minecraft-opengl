@@ -13,7 +13,7 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_texture(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
+      m_terrain(this), m_player(glm::vec3(48.f, 130.f, 48.f), m_terrain),
       m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch()),
       progPostProcess(this),
       postProcessFBO(this, width(), height(), this->devicePixelRatio()),
@@ -200,10 +200,13 @@ void MyGL::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
-    glm::mat4 depthProjectionMatrix = glm::ortho<float>(-1000,1000,-1000,1000, 2, 500);
+    glm::mat4 depthProjectionMatrix = glm::ortho<float>(-300,300,-300,300, 2, 500);
     glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::normalize(glm::cross(lightInvDir, glm::vec3(0, 0, 1))));
     glm::mat4 depthModelMatrix = glm::mat4(1.0);
     glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * depthModelMatrix;
+
+
+
 
     progShadows.setUnifMat4("u_DepthMVP", depthMVP);
     glCullFace(GL_FRONT);
@@ -431,10 +434,29 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             switch (e->button()) {
                 case Qt::LeftButton:
                 std::cout << "remove block" << std::endl;
-                    //ERROR: WHEN DESTROYING THE BLOCK AT THE EDGE OF A CHUNK, WE DO NOT UPDATE THE VBO OF THE NEIGHBORING CHUNK
                     if (m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z) != BEDROCK) {
                         m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
-                        m_terrain.getChunkAt(currPos.x, currPos.z)->createVBOdata();
+
+                        auto myChunk = m_terrain.getChunkAt(currPos.x, currPos.z).get();
+
+                        for(int i = -1; i <= 1; i++) {
+                            for(int j = -1; j <= 1; j++) {
+                                if ((i != 0 && j != 0) || (i == 0 && j == 0)) {
+                                    continue;
+                                }
+
+                                if (myChunk != m_terrain.getChunkAt(currPos.x + i, currPos.z + j).get()) {
+                                    auto chunk = m_terrain.getChunkAt(currPos.x + i, currPos.z + j).get();
+                                    chunk->createVBOdata();
+                                    chunk->loadToGPU();
+                                }
+                            }
+                        }
+
+                        myChunk->createVBOdata();
+                        myChunk->loadToGPU();
+                        // m_terrain.getChunkAt(currPos.x, currPos.z)->loaded = false;                        m_terrain.getChunkAt(currPos.x, currPos.z)->createVBOdata();
+                        // m_terrain.getChunkAt(currPos.x, currPos.z)->ready = true;
                         // m_terrain.getChunkAt(currPos.x, currPos.z)->loaded = false;
                         // m_terrain.getChunkAt(currPos.x, currPos.z)->ready = true;
                         // m_terrain.loadChunkVBOs();
