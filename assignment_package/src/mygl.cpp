@@ -15,7 +15,7 @@ MyGL::MyGL(QWidget *parent)
     m_progLambert(this), m_progFlat(this), m_progSky(this), m_progInstanced(this), m_texture(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
     m_quad(this),
-    m_inputs(), m_timer(), m_time(0.f), m_lastTime(QDateTime::currentMSecsSinceEpoch())
+    m_inputs(), m_timer(), m_time(0.f), m_lastTime(QDateTime::currentMSecsSinceEpoch()),
       progPostProcess(this),
       postProcessFBO(this, width(), height(), this->devicePixelRatio()),
       quadDrawable(this)

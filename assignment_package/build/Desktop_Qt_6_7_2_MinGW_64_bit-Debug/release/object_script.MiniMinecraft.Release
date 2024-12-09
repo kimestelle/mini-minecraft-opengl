@@ -1,7 +1,9 @@
+release/framebuffer.o
 release/main.o
 release/mainwindow.o
 release/mygl.o
 release/skyQuad.o
+release/quad.o
 release/shaderprogram.o
 release/drawable.o
 release/cameracontrolshelp.o
