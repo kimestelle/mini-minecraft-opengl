@@ -13,7 +13,7 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progSky(this), m_progInstanced(this), m_texture(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
+      m_terrain(this), m_player(glm::vec3(47.f, 164.f, 170.f), m_terrain),
       m_quad(this),
       m_inputs(), m_timer(), m_startTime(QDateTime::currentMSecsSinceEpoch()),
       m_lastTime(QDateTime::currentMSecsSinceEpoch()),
@@ -96,7 +96,6 @@ if (!QFile(":/textures/minecraft_textures_all.png").exists()){
         for(int j = -1; j <= 1; j++) {
             std::cout << x + i * 64 << ", " << z + j * 64 << std::endl;
             m_terrain.GenerateTerrain(x + i * 64, z + j * 64);
-            std::cout << "COokie" << std::endl;
         }
     }
     //create sky quad
@@ -105,6 +104,8 @@ if (!QFile(":/textures/minecraft_textures_all.png").exists()){
     // glBindVertexArray(0);
     // glBindBuffer(GL_ARRAY_BUFFER, 0);
     // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    m_player.move(glm::vec3(47.f, 164.f, 170.f));
 
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
@@ -151,15 +152,14 @@ void MyGL::tick() {
     if (dT > 0) {
         m_lastTime = currentTime;
     }
-    m_player.tick(dT, m_inputs); // Player-side tick
-
-    int x = (m_player.mcr_position.x - 32) - ((int)(m_player.mcr_position.x - 32) % 64);
-    int z = (m_player.mcr_position.z - 32) - ((int)(m_player.mcr_position.z - 32) % 64);
-
 
     auto f = [this](float x, float z) {
         m_terrain.GenerateTerrain(x, z);
     };
+
+    int x = (m_player.mcr_position.x - 32) - ((int)(m_player.mcr_position.x - 32) % 64);
+    int z = (m_player.mcr_position.z - 32) - ((int)(m_player.mcr_position.z - 32) % 64);
+
 
     std::vector<std::thread> blockTypeWorkers = {};
 
@@ -175,11 +175,15 @@ void MyGL::tick() {
         }
     }
 
+
     m_terrain.loadChunkVBOs();
 
     for(auto &x : blockTypeWorkers) {
         x.detach();
     }
+
+
+    m_player.tick(dT, m_inputs); // Player-side tick
 
     m_inputs.mouseX = 0;
     m_inputs.mouseY = 0;
@@ -440,20 +444,20 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         float nextX = ray.x >= 0 ? std::ceil(currPos.x + 0.01f) : std::floor(currPos.x-0.01f);
         float nextY = ray.y >= 0 ? std::ceil(currPos.y + 0.01f) : std::floor(currPos.y-0.01f);
         float nextZ = ray.z >= 0 ? std::ceil(currPos.z + 0.01f) : std::floor(currPos.z-0.01f);
-        float xDist = (nextX - currPos.x) / ray.x;
-        float yDist = (nextY - currPos.y) / ray.y;
-        float zDist = (nextZ - currPos.z) / ray.z;
+        float xDist = std::abs(ray.x) > 0.0001f ? (nextX - currPos.x) / ray.x : FLT_MAX;
+        float yDist = std::abs(ray.y) > 0.0001f ? (nextY - currPos.y) / ray.y : FLT_MAX;
+        float zDist = std::abs(ray.z) > 0.0001f ? (nextZ - currPos.z) / ray.z : FLT_MAX;
         float minDist = std::min(xDist, std::min(yDist, zDist));
         currPos += minDist * ray;
         if (xDist == minDist) {
-            currPos.x = glm::round(currPos.x);
-            currPos.x = ray.x >= 0 ? currPos.x + 0.01f : currPos.x - 0.01f;
+            currPos.x = nextX;
+            currPos.x += ray.x >= 0 ? 0.01f : -0.01f;
         } else if (yDist == minDist) {
-            currPos.y = glm::round(currPos.y);
-            currPos.y = ray.y >= 0 ? currPos.y + 0.01f : currPos.y - 0.01f;
+            currPos.y = nextY;
+            currPos.y += ray.y >= 0 ? 0.01f : -0.01f;
         } else {
-            currPos.z = glm::round(currPos.z);
-            currPos.z = ray.z >= 0 ? currPos.z + 0.01f : currPos.z - 0.01f;
+            currPos.z = nextZ;
+            currPos.z += ray.z >= 0 ? 0.01f : -0.01f;
         }
         if (m_terrain.hasChunkAt(currPos.x, currPos.z)){
             BlockType block = m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z);

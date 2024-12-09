@@ -158,7 +158,7 @@ void Terrain::loadChunkVBOs() {
         }
 
         if(value->working) { ///DONE WORKING
-            std::cout << "mew" << std::endl;
+            // std::cout << "mew" << std::endl;
             value->loadToGPU();
             value->working = false;
             value->loaded = true;
@@ -220,92 +220,9 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
 }
 
 
-void Terrain::CreateTestScene() {
-    // TODO: DELETE THIS LINE WHEN YOU DELETE m_geomCube!
-
-    // Create the Chunks that will
-    // store the blocks for our
-    // initial world space
-
-    // for(int x = 0; x < 64; x += 16) {
-    //     for(int z = 0; z < 64; z += 16) {
-            instantiateChunkAt(0, 0);
-    //     }
-    // }
-    // Tell our existing terrain set that
-    // the "generated terrain zone" at (0,0)
-    // now exists.
-    m_generatedTerrain.insert(toKey(0, 0));
-
-    // Create the basic terrain floor
-    // for(int x = 0; x < 64; ++x) {
-    //     for(int z = 0; z < 64; ++z) {
-    //         if((x + z) % 2 == 0) {
-    //             setGlobalBlockAt(x, 128, z, STONE);
-    //         }
-    //         else {
-    //             setGlobalBlockAt(x, 128, z, DIRT);
-    //         }
-    //     }
-    // }
-    // // Add "walls" for collision testing
-    // for(int x = 0; x < 64; ++x) {
-    //     setGlobalBlockAt(x, 129, 16, GRASS);
-    //     setGlobalBlockAt(x, 130, 16, GRASS);
-    //     setGlobalBlockAt(x, 129, 48, GRASS);
-    //     setGlobalBlockAt(16, 130, x, GRASS);
-    // }
-    // // Add a central column
-    // for(int y = 129; y < 140; ++y) {
-    //     setGlobalBlockAt(32, y, 32, GRASS);
-    // }
-
-    setGlobalBlockAt(0, 128, 0, WATER);
-    setGlobalBlockAt(1, 128, 0, GRASS);
-
-
-    //create vbo data
-    for(int x = 0; x < 64; x += 16) {
-        for(int z = 0; z < 64; z += 16) {
-            if (hasChunkAt(x, z)) {
-                getChunkAt(x, z)->createVBOdata();
-            }
-        }
-    }
-
-
-}
-
-//function to expand terrain based on player position
-// void Terrain::expandTerrainIfNeeded(const glm::vec3 &playerPos) {
-//     int xCenter = ((int)playerPos.x) - ((int)playerPos.x % 16);
-//     int zCenter = ((int)playerPos.z) - ((int)playerPos.z % 16);
-
-//     for(int i = -1; i <= 1; i++) {
-//         for (int j = -1; j <= 1; j++) {
-//             if(!hasChunkAt(xCenter + i * 16, zCenter + j * 16)) {
-//                 // std::cout << "expanding Terrain" << std::endl;
-//                 instantiateChunkAt(xCenter + i * 16, zCenter + j * 16);
-//             }
-//         }
-//     }
-
-//     xCenter = ((int)playerPos.x) - ((int)playerPos.x % 64);
-//     zCenter = ((int)playerPos.z) - ((int)playerPos.z % 64);
-
-//     for(int i = -1; i <= 1; i++) {
-//         for (int j = -1; j <= 1; j++) {
-//             int c = m_generatedTerrain.count(toKey(xCenter + 64*i, zCenter + 64 * j));
-//             if (c == 0) {
-//                 // std::cout << "expanding generation" << std::endl;
-//                 m_generatedTerrain.insert(toKey(xCenter + 64*i, zCenter + 64 * j));
-//             }
-//         }
-//     }
-// }
-
-
 float PerlinNoise(float x, float y, float z);
+float voronoiNoise(const glm::vec2& position, int seed);
+float noise(int x, int y) ;
 
 
 void Terrain::GenerateTerrain(int xPos, int zPos)  {
@@ -313,7 +230,9 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
     if(m_generatedTerrain.count(toKey(xPos, zPos)) > 0) {
         return;
     }
-
+    if(m_generatedTerrain.find(toKey(xPos, zPos)) != m_generatedTerrain.end()) {
+        return;
+    }
     m_generatedTerrain.insert(toKey(xPos, zPos));
 
     int WinChunks = 4;
@@ -338,70 +257,200 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
         }
     }
 
-    std::cout << "Part 1 for at " << xPos << ", " << zPos << std::endl;
-
     // Create the basic terrain floor
-    for(int y = 0; y < 256; y++) {
-        for (int x = xPos; x < 16*WinChunks + xPos; x++) {
-            for (int z = zPos; z < 16*WinChunks + zPos; z++) {
-                float noise;
-                bool isEmpty = true;
+    for (int x = xPos; x < 16*WinChunks + xPos; x++) {
+        for (int z = zPos; z < 16*WinChunks + zPos; z++) {
 
-                float typeTerrain = PerlinNoise(x * 0.01f * 1.5346 + 0.3246, z * 0.01f * 1.5346 + 0.8756, 0);
+            const float typeTerrain = 40 * PerlinNoise(x * 0.003, 12, z * 0.003) + 129;
+            const float terrain_perlin = PerlinNoise(x * 0.02, 12.23, z * 0.02);
+
+            for(int y = 0; y < 256; y++) {
                 if (y == 0) {
                     setGlobalBlockAt(x, y, z, BEDROCK);
-                    isEmpty = false;
                 } else if (y <= 128) {
-                    noise = PerlinNoise(0.1*x, 0.1*z, 0.1*y);
+                    float noise = PerlinNoise(0.1*x, 0.1*z, 0.1*y);
                     // I know instructions say negative but I find this produces a nice looking result
-                    if (noise < 0.3) {
+                    if (noise < 0.5) {
                         if (y<25) {
                             setGlobalBlockAt(x, y, z, LAVA);
-                            isEmpty = false;
                         } else {
                             setGlobalBlockAt(x, y, z, EMPTY);
                         }
                     } else {
                         setGlobalBlockAt(x, y, z, STONE);
-                        isEmpty = false;
                     }
                 } else if (y == 129) {
-                    noise = PerlinNoise(0.05 * x * 0.6237f, 0.05 * z * 0.6237f, 0);
-                    if (typeTerrain < 0.5) {
-                        if(noise >= (0.3)) {
-                            setGlobalBlockAt(x, y, z, GRASS);
-                            isEmpty = false;
-                        }
-                    } else {
-                        if(noise >= (0.3)) {
-                            setGlobalBlockAt(x, y, z, STONE);
-                            isEmpty = false;
-                        }
-                    }
+                    setGlobalBlockAt(x, y, z, STONE);
                 }
                 else {
-                    noise = PerlinNoise(0.05 * x * 0.6237f, 0.05 * z * 0.6237f, 0);
-                    float rand;
-                    if (typeTerrain < 0.5) {
-                        rand = noise - 0.06 * (y - 130);
-
-                        if(rand > 0.35f) {
-                            setGlobalBlockAt(x, y, z, GRASS);
-                            isEmpty = false;
+                    if (typeTerrain <= 139) {
+                        if (y <= typeTerrain) {
+                            setGlobalBlockAt(x, y, z, DIRT);
+                        }
+                        else if (y > typeTerrain && y <= 139) {
+                            setGlobalBlockAt(x, y, z, WATER);
                         }
                     } else {
-                        rand = (noise * glm::min(2.0f, 1.0f)) - 0.03 * (y - 130);
-                        // rand *= typeTerrain;
+                        // split into four biomes:
+                        float terrainPercent = (typeTerrain - 139) / 30;
+                        // 0 to 1
+                        if (terrainPercent < 0.333f) {
+                            //Grasslands
+                            // std::cout << "A" << x << ", " << z << std::endl;
 
-                        if(rand > 0.35f) {
-                            setGlobalBlockAt(x, y, z, STONE);
-                            isEmpty = false;
+                            float temp = (terrainPercent - (0.333f * 0.5));
+                            if (temp < 0) {
+                                temp = -temp;
+                            }
+
+                            float amp = (0.333f / 2.0f) - temp;
+
+                            float threshold = (80 * amp * terrain_perlin) + 139;
+
+                            if (y <= threshold) {
+                                setGlobalBlockAt(x, y, z, SAND);
+                                if(y+1 > threshold) {
+                                    if (x % 10 == (int)(threshold) % 10 && z % 10 == (int)(threshold) % 10) {
+                                        setGlobalBlockAt(x, y+1, z, CACTUS);
+                                        setGlobalBlockAt(x, y+2, z, CACTUS);
+                                        setGlobalBlockAt(x, y+3, z, CACTUS);
+                                        if (x % 10 > 4) {
+                                            setGlobalBlockAt(x, y+4, z, CACTUS);
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (terrainPercent < 0.666f) {
+                            //     //Grass
+                            // std::cout << "B " << x << ", " << z << std::endl;
+                            float temp = (terrainPercent - (0.333f * 1.5));
+                            if (temp < 0) {
+                                temp = -temp;
+                            }
+
+                            float amp = (0.333f / 2.0f) - temp;
+
+                            float threshold = (80 * amp * terrain_perlin) + 139;
+
+                            if (y <= threshold) {
+                                if(y + 1 > threshold) {
+                                    setGlobalBlockAt(x, y, z, GRASS);
+                                    if (noise(x, z) > 0.97f) {
+
+                                        bool ctd = true;
+                                        for(int i = -2; i <= 2; i++) {
+                                            for(int j = -2; j <= 2; j++) {
+                                                if (!hasChunkAt(x + i, z + j) || noise(x+i, z+j) > 0.99f) {
+                                                    ctd = false;
+                                                }
+                                            }
+                                        }
+
+                                        if(ctd) {
+                                            setGlobalBlockAt(x, y+1, z, WOOD);
+                                            setGlobalBlockAt(x, y+2, z, WOOD);
+                                            setGlobalBlockAt(x, y+3, z, WOOD);
+                                            setGlobalBlockAt(x, y+4, z, WOOD);
+                                            setGlobalBlockAt(x, y+5, z, WOOD);
+                                            setGlobalBlockAt(x, y+6, z, WOOD);
+                                            setGlobalBlockAt(x, y+7, z, LEAVES);
+
+                                            for(int i = -2; i <= 2; i++) {
+                                                for(int j = -2; j <= 2; j++) {
+                                                    if (i == 0  && j == 0) {
+                                                        continue;
+                                                    }
+
+                                                    setGlobalBlockAt(x+i, y+4, z+j, LEAVES);
+                                                }
+                                            }
+
+                                            for(int i = -1; i <= 1; i++) {
+                                                for(int j = -1; j <= 1; j++) {
+                                                    if (i == 0  && j == 0) {
+                                                        continue;
+                                                    }
+
+                                                    setGlobalBlockAt(x+i, y+6, z+j, LEAVES);
+                                                }
+                                            }
+                                        }
+
+
+                                    }
+                                } else {
+                                    setGlobalBlockAt(x, y, z, DIRT);
+                                }
+                            }
+
+
+                        } else {
+                            //     //Snowy Mountains
+
+                            float temp = terrainPercent - (0.333f * 2.5);
+                            if (temp < 0) {
+                                temp = -temp;
+                            }
+                            float amp = (0.333f / 2.0f) - temp;
+
+
+                            float threshold = 360 * amp * terrain_perlin + 139;
+
+                            if (y <= threshold) {
+                                if(y + 1 > threshold) {
+                                    setGlobalBlockAt(x, y, z, SNOW);
+
+                                    if (noise(x, z) > 0.97f) {
+
+                                        bool ctd = true;
+                                        for(int i = -2; i <= 2; i++) {
+                                            for(int j = -2; j <= 2; j++) {
+                                                if (!hasChunkAt(x + i, z + j) || noise(x+i, z+j) > 0.97f) {
+                                                    ctd = false;
+                                                }
+                                            }
+                                        }
+
+                                        if(!ctd) {
+                                            break;
+                                        }
+
+                                        if(ctd) {
+                                            setGlobalBlockAt(x, y+1, z, WOOD);
+                                            setGlobalBlockAt(x, y+2, z, WOOD);
+                                            setGlobalBlockAt(x, y+3, z, WOOD);
+                                            setGlobalBlockAt(x, y+4, z, WOOD);
+                                            setGlobalBlockAt(x, y+5, z, WOOD);
+                                            setGlobalBlockAt(x, y+6, z, WOOD);
+                                            setGlobalBlockAt(x, y+7, z, LEAVES);
+
+                                    //         for(int i = -2; i <= 2; i++) {
+                                    //             for(int j = -2; j <= 2; j++) {
+                                    //                 if (i == 0  && j == 0) {
+                                    //                     continue;
+                                    //                 }
+
+                                    //                 setGlobalBlockAt(x+i, y+4, z+j, LEAVES);
+                                    //             }
+                                    //         }
+
+                                            for(int i = -1; i <= 1; i++) {
+                                                for(int j = -1; j <= 1; j++) {
+                                                    if (i == 0  && j == 0) {
+                                                        continue;
+                                                    }
+
+                                                    setGlobalBlockAt(x+i, y+6, z+j, LEAVES);
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    setGlobalBlockAt(x, y, z, ICE);
+                                }
+                            }
                         }
                     }
-                }
-
-                if(isEmpty && y < 130 && y >= 125) {
-                    setGlobalBlockAt(x, y, z, WATER);
                 }
             }
         }
@@ -422,7 +471,7 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
     //     }
     // }
 
-    std::cout << "Part 3 for at " << xPos << ", " << zPos << std::endl;
+    // std::cout << "Part 3 for at " << xPos << ", " << zPos << std::endl;
 
     for(int x = xPos; x < 16*WinChunks + xPos; x += 16) {
         for(int z = zPos; z < 16*WinChunks + zPos; z += 16) {
@@ -512,11 +561,17 @@ float PerlinNoise(float x, float y, float z) {
 
 
 
+
+
 // terrain functions
 
 
 
-
+float noise(int x, int y) {
+    x = (y << 13) ^ x;
+    uint32_t hash = (x * (y * x * 15731 + 789221) + 1376312589) & 0x7fffffff;
+    return static_cast<float>(hash) / static_cast<float>(0x7fffffff);
+}
 
 
 

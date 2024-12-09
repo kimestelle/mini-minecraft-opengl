@@ -2,7 +2,7 @@
 #include <iostream>
 
 Chunk::Chunk(int x, int z, OpenGLContext* context) : Drawable(context), m_blocks(), minX(x), minZ(z), m_neighbors{{XPOS, nullptr}, {XNEG, nullptr}, {ZPOS, nullptr}, {ZNEG, nullptr}},
-ready(false),
+blockMutex(), ready(false),
     loaded(false),
     working(false)
 {
@@ -87,7 +87,55 @@ std::unordered_map<BlockType, std::unordered_map<Direction, glm::vec2>> blockUVM
             {YNEG, glm::vec2(14, 1)},
             {ZPOS, glm::vec2(14, 1)},
             {ZNEG, glm::vec2(14, 1)},
-            }}
+            }},
+    {SAND, {
+            {XPOS, glm::vec2(0, 4)},
+            {XNEG, glm::vec2(0, 4)},
+            {YPOS, glm::vec2(0, 4)},
+            {YNEG, glm::vec2(0, 4)},
+            {ZPOS, glm::vec2(0, 4)},
+            {ZNEG, glm::vec2(0, 4)},
+            }},
+    {WOOD, {
+            {XPOS, glm::vec2(4, 14)},
+            {XNEG, glm::vec2(4, 14)},
+            {YPOS, glm::vec2(5, 14)},
+            {YNEG, glm::vec2(5, 14)},
+            {ZPOS, glm::vec2(4, 14)},
+            {ZNEG, glm::vec2(4, 14)},
+            }},
+    {LEAVES, {
+            {XPOS, glm::vec2(4, 12)},
+            {XNEG, glm::vec2(4, 12)},
+            {YPOS, glm::vec2(4, 12)},
+            {YNEG, glm::vec2(4, 12)},
+            {ZPOS, glm::vec2(4, 12)},
+            {ZNEG, glm::vec2(4, 12)},
+            }},
+    {CACTUS, {
+              {XPOS, glm::vec2(6, 11)},
+              {XNEG, glm::vec2(6, 11)},
+              {YPOS, glm::vec2(5, 11)},
+              {YNEG, glm::vec2(5, 11)},
+              {ZPOS, glm::vec2(6, 11)},
+              {ZNEG, glm::vec2(6, 11)},
+              }},
+    {ICE, {
+              {XPOS, glm::vec2(3, 11)},
+              {XNEG, glm::vec2(3, 11)},
+              {YPOS, glm::vec2(3, 11)},
+              {YNEG, glm::vec2(3, 11)},
+              {ZPOS, glm::vec2(3, 11)},
+              {ZNEG, glm::vec2(3, 11)},
+              }},
+    {BEDROCK, {
+              {XPOS, glm::vec2(1, 14)},
+              {XNEG, glm::vec2(1, 14)},
+              {YPOS, glm::vec2(1, 14)},
+              {YNEG, glm::vec2(1, 14)},
+              {ZPOS, glm::vec2(1, 14)},
+              {ZNEG, glm::vec2(1, 14)},
+              }},
 };
 
 
@@ -131,6 +179,10 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
     case ZPOS: vertices[0] = glm::vec4(0, 0, 1, 1); vertices[1] = glm::vec4(1, 0, 1, 1); vertices[2] = glm::vec4(1, 1, 1, 1); vertices[3] = glm::vec4(0, 1, 1, 1); normal = glm::vec4(0, 0, 1, 0); break;
     case ZNEG: vertices[0] = glm::vec4(0, 0, 0, 1); vertices[1] = glm::vec4(1, 0, 0, 1); vertices[2] = glm::vec4(1, 1, 0, 1); vertices[3] = glm::vec4(0, 1, 0, 1); normal = glm::vec4(0, 0, -1, 0);  break;
     }
+
+    // if (t == WATER && dir != YPOS) {
+    //     return;
+    // }
 
     glm::vec2 baseUV = getUV(t, dir);
     std::vector<glm::vec2> faceUVs = {
@@ -190,7 +242,7 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
 }
 
 bool isTransparent(BlockType t) {
-    return t == WATER;
+    return t == WATER || t == CACTUS || t == ICE;
 }
 
 void Chunk::generateVBOData() {
@@ -280,7 +332,7 @@ void Chunk::generateVBOData() {
 
 void Chunk::loadToGPU() {
 
-    std::cout << "Loading to GPU" << std::endl;
+    // std::cout << "Loading to GPU" << std::endl;
 
     generateBuffer(OPQ_INTERLEAVED);
     generateBuffer(OPQ_INDEX);
@@ -307,7 +359,7 @@ void Chunk::loadToGPU() {
         indexCounts[OPQ_INTERLEAVED] = 0;
     }
 
-    std::cout << "debug: INTERLEAVED count: " << indexCounts[OPQ_INTERLEAVED] << std::endl;
+    // std::cout << "debug: INTERLEAVED count: " << indexCounts[OPQ_INTERLEAVED] << std::endl;
 
     generateBuffer(TRANS_INTERLEAVED);
     generateBuffer(TRANS_INDEX);
