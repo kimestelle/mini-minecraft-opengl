@@ -5,6 +5,8 @@
         <file>glsl/flat.frag.glsl</file>
         <file>glsl/flat.vert.glsl</file>
         <file>glsl/instanced.vert.glsl</file>
+        <file>glsl/sky.frag.glsl</file>
+        <file>glsl/sky.vert.glsl</file>
         <file>glsl/passthrough.vert.glsl</file>
         <file>glsl/postprocess.frag.glsl</file>
         <file>glsl/shadows.vert.glsl</file>

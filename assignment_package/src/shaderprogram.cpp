@@ -8,7 +8,7 @@
 
 ShaderProgram::ShaderProgram(OpenGLContext *context)
     : vertShader(), fragShader(), prog(),
-      context(context), m_isReloading(true)
+      m_isReloading(true), context(context)
 {}
 
 void ShaderProgram::destroy() {
@@ -54,6 +54,7 @@ void ShaderProgram::create(const char *vertfile, const char *fragfile)
     // Tell prog that it manages these particular vertex and fragment shaders
     context->glAttachShader(prog, vertShader);
     context->glAttachShader(prog, fragShader);
+
     context->glLinkProgram(prog);
     // Check for linking success
     GLint linked;
@@ -83,7 +84,10 @@ void ShaderProgram::parseShaderSourceForVariables(char *vertSource, char *fragSo
             this->addUniform(sub[2].left(sub[2].indexOf(";")).toStdString().c_str());
         }
         if(sub[0] == "in") {
-            this->addAttrib(sub[2].left(sub[2].indexOf(";")).toStdString().c_str());
+            QString attribName = sub[2].left(sub[2].indexOf(";"));
+            // std::cout << "parsed attribute: " << vertSource << attribName.toStdString() << std::endl;
+            this->addAttrib(attribName.toStdString().c_str());
+
         }
     }
     // Parse the uniforms of the fragment shader
@@ -94,6 +98,11 @@ void ShaderProgram::parseShaderSourceForVariables(char *vertSource, char *fragSo
             this->addUniform(sub[2].left(sub[2].indexOf(";")).toStdString().c_str());
         }
     }
+
+    for (const auto &attr : m_attribs) {
+        std::cout << "Attribute: " << attr.first << ", Location: " << attr.second << std::endl;
+    }
+
 }
 
 void ShaderProgram::useMe() {
@@ -294,6 +303,33 @@ void ShaderProgram::setUnifArrayInt(std::string name, int offset, int i) {
 
 //     context->printGLErrorLog();
 // }
+
+void ShaderProgram::drawSky(Drawable &sky) {
+    if (sky.elemCount(SKY_INDEX) <= 0) {
+        throw std::invalid_argument(
+            "Attempting to draw a Drawable with an uninitialized element count! Remember to set it to the length of your index array in create()."
+            );
+    }
+
+    useMe();
+
+    const GLsizei stride = sizeof(glm::vec4);
+    int handle;
+    if ((handle = m_attribs["sky_Pos"]) != -1 && sky.bindBuffer(SKY_INTERLEAVED)) {
+        context->glEnableVertexAttribArray(handle);
+        context->glVertexAttribPointer(handle, 4, GL_FLOAT, GL_FALSE, stride, (void*)0);
+    }
+
+    sky.bindBuffer(SKY_INDEX);
+    context->glDrawElements(GL_TRIANGLES, sky.elemCount(SKY_INDEX), GL_UNSIGNED_INT, 0);
+
+    if (m_attribs["sky_Pos"] != -1) {
+        context->glDisableVertexAttribArray(m_attribs["sky_Pos"]);
+    }
+
+    context->printGLErrorLog();
+}
+
 
 void ShaderProgram::drawOpq(Drawable &d) {
     // std::cout << "debug: element count for INDEX: " << d.elemCount(INDEX) << std::endl;

@@ -12,14 +12,16 @@
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
-      m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_texture(this),
+      m_progLambert(this), m_progFlat(this), m_progSky(this), m_progInstanced(this), m_texture(this),
       m_terrain(this), m_player(glm::vec3(47.f, 164.f, 170.f), m_terrain),
-      m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch()),
+      m_quad(this),
+      m_inputs(), m_timer(), m_startTime(QDateTime::currentMSecsSinceEpoch()),
+      m_lastTime(QDateTime::currentMSecsSinceEpoch()),
       progPostProcess(this),
       postProcessFBO(this, width(), height(), this->devicePixelRatio()),
       quadDrawable(this),
       progShadows(this),
-      shadowFBO(this, 4096/this->devicePixelRatio(), 4096/this->devicePixelRatio(), this->devicePixelRatio())
+      shadowFBO(this, 8192/this->devicePixelRatio(), 8192/this->devicePixelRatio(), this->devicePixelRatio())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -76,7 +78,9 @@ void MyGL::initializeGL()
     postProcessFBO.create();
     shadowFBO.create(true);
 
-    if (!QFile(":/textures/minecraft_textures_all.png").exists()){
+    m_progSky.create(":/glsl/sky.vert.glsl", ":/glsl/sky.frag.glsl");
+
+if (!QFile(":/textures/minecraft_textures_all.png").exists()){
         std::cerr << "error: tex file not found" << std::endl;
     } else {
         m_texture.create(":/textures/minecraft_textures_all.png", GL_RGBA, GL_BGRA);
@@ -94,6 +98,12 @@ void MyGL::initializeGL()
             m_terrain.GenerateTerrain(x + i * 64, z + j * 64);
         }
     }
+    //create sky quad
+    m_quad.create();
+
+    // glBindVertexArray(0);
+    // glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     m_player.move(glm::vec3(47.f, 164.f, 170.f));
 
@@ -119,9 +129,13 @@ void MyGL::resizeGL(int w, int h) {
     postProcessFBO.destroy();
     postProcessFBO.create();
 
-    shadowFBO.resize(4096/this->devicePixelRatio(), 4096/this->devicePixelRatio(), this->devicePixelRatio());
+    shadowFBO.resize(8192/this->devicePixelRatio(), 8192/this->devicePixelRatio(), this->devicePixelRatio());
     shadowFBO.destroy();
     shadowFBO.create();
+    //position sky
+    glm::mat4 viewProjInv = glm::inverse(viewproj);
+    m_progSky.setUnifMat4("u_ViewProjInv", viewProjInv);
+    m_progSky.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
 
     printGLErrorLog();
 }
@@ -197,9 +211,9 @@ void MyGL::sendPlayerDataToGUI() const {
 // so paintGL() called at a rate of 60 frames per second.
 void MyGL::paintGL() {
     //bind to shadow mapping setup
-    glm::vec3 lightInvDir = glm::vec3(400, 200, 0);
+    glm::vec3 lightInvDir = glm::vec3(200, 150, 0);
     shadowFBO.bindFrameBuffer();
-    glViewport(0, 0, 4096, 4096);
+    glViewport(0, 0, 8192, 8192);
     glClearColor(1.f, 1.f, 1.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -209,13 +223,11 @@ void MyGL::paintGL() {
     glm::mat4 depthModelMatrix = glm::mat4(1.0);
     glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * depthModelMatrix;
 
-
-
-
     progShadows.setUnifMat4("u_DepthMVP", depthMVP);
+    glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
     renderTerrain(progShadows);
-    glCullFace(GL_BACK);
+    glDisable(GL_CULL_FACE);
 
     glm::mat4 biasMatrix(
         0.5, 0.0, 0.0, 0.0,
@@ -240,14 +252,30 @@ void MyGL::paintGL() {
     this->glUniform1i(m_progLambert.m_unifs["u_ShadowMap"], shadowFBO.getTextureSlot());
 
     glm::mat4 viewproj = m_player.mcr_camera.getViewProj();
+
+    glDisable(GL_CULL_FACE);
+    // glDisable(GL_DEPTH_TEST);
+
+    m_progSky.useMe();
+    glm::mat4 viewProjInv = glm::inverse(viewproj);
+    m_progSky.setUnifMat4("u_ViewProjInv", viewProjInv);
+    m_progSky.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
+    m_progSky.drawSky(m_quad);
+    m_progSky.setUnifFloat("u_Time", m_time);
+
+    // glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+  
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
     m_progLambert.setUnifMat4("u_Model", glm::mat4());
     m_progLambert.setUnifMat4("u_ModelInvTr", glm::mat4());
+    m_progLambert.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
 
     m_progLambert.setUnifFloat("u_Time", m_time++);
-    progPostProcess.setUnifFloat("u_Time", m_time);
+
+    progPostProcess.setUnifFloat("u_Time", (QDateTime::currentMSecsSinceEpoch() - m_startTime) / 1000.f);
 
     renderTerrain(m_progLambert);
 
@@ -276,6 +304,7 @@ void MyGL::paintGL() {
 
     this->glUniform1i(progPostProcess.m_unifs["u_Texture"],
                        postProcessFBO.getTextureSlot());
+    progPostProcess.setUnifVec2("u_Resolution", glm::vec2(this->width() * this->devicePixelRatio(), this->height() * this->devicePixelRatio()));
 
     // Check camera position to determine post process effect
     if (m_terrain.hasChunkAt(m_player.mcr_position.x, m_player.mcr_position.z)) {
