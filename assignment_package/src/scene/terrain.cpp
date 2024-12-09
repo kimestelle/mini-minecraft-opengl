@@ -131,6 +131,7 @@ void Terrain::setGlobalBlockAt(int x, int y, int z, BlockType t)
                            t);
         // c->createVBOdata();
         chunkMutex.unlock();
+        c->loaded = false;
     }
     else {
         chunkMutex.unlock();
@@ -148,7 +149,8 @@ void Terrain::loadChunkVBOs() {
             value->working = false;
             auto x = value.get();
             auto f = [x]() {
-                x->createVBOdata();
+                std::cout << "Beginning VBO data Generation" << std::endl;
+                x->generateVBOData();
             };
 
             auto VBOWorker = std::thread(f);
@@ -156,7 +158,7 @@ void Terrain::loadChunkVBOs() {
         }
 
         if(value->working) { ///DONE WORKING
-            std::cout << "Loading to GPU" << std::endl;
+            std::cout << "mew" << std::endl;
             value->loadToGPU();
             value->working = false;
             value->loaded = true;
@@ -308,9 +310,9 @@ float PerlinNoise(float x, float y, float z);
 
 void Terrain::GenerateTerrain(int xPos, int zPos)  {
 
-    // if(m_generatedTerrain.count(toKey(xPos, zPos)) > 0) {
-    //     return;
-    // }
+    if(m_generatedTerrain.count(toKey(xPos, zPos)) > 0) {
+        return;
+    }
 
     m_generatedTerrain.insert(toKey(xPos, zPos));
 
@@ -342,33 +344,38 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
     for(int y = 0; y < 256; y++) {
         for (int x = xPos; x < 16*WinChunks + xPos; x++) {
             for (int z = zPos; z < 16*WinChunks + zPos; z++) {
-
                 float noise;
+                bool isEmpty = true;
 
                 float typeTerrain = PerlinNoise(x * 0.01f * 1.5346 + 0.3246, z * 0.01f * 1.5346 + 0.8756, 0);
                 if (y == 0) {
                     setGlobalBlockAt(x, y, z, BEDROCK);
+                    isEmpty = false;
                 } else if (y <= 128) {
                     noise = PerlinNoise(0.1*x, 0.1*z, 0.1*y);
                     // I know instructions say negative but I find this produces a nice looking result
                     if (noise < 0.3) {
                         if (y<25) {
                             setGlobalBlockAt(x, y, z, LAVA);
+                            isEmpty = false;
                         } else {
                             setGlobalBlockAt(x, y, z, EMPTY);
                         }
                     } else {
                         setGlobalBlockAt(x, y, z, STONE);
+                        isEmpty = false;
                     }
                 } else if (y == 129) {
                     noise = PerlinNoise(0.05 * x * 0.6237f, 0.05 * z * 0.6237f, 0);
                     if (typeTerrain < 0.5) {
                         if(noise >= (0.3)) {
                             setGlobalBlockAt(x, y, z, GRASS);
+                            isEmpty = false;
                         }
                     } else {
                         if(noise >= (0.3)) {
                             setGlobalBlockAt(x, y, z, STONE);
+                            isEmpty = false;
                         }
                     }
                 }
@@ -380,6 +387,7 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
 
                         if(rand > 0.35f) {
                             setGlobalBlockAt(x, y, z, GRASS);
+                            isEmpty = false;
                         }
                     } else {
                         rand = (noise * glm::min(2.0f, 1.0f)) - 0.03 * (y - 130);
@@ -387,11 +395,12 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
 
                         if(rand > 0.35f) {
                             setGlobalBlockAt(x, y, z, STONE);
+                            isEmpty = false;
                         }
                     }
                 }
 
-                if(getGlobalBlockAt(x, y, z) == EMPTY && y < 130 && y >= 125) {
+                if(isEmpty && y < 130 && y >= 125) {
                     setGlobalBlockAt(x, y, z, WATER);
                 }
             }
@@ -399,32 +408,19 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
     }
 
 
-    std::cout << "Part 2 for at " << xPos << ", " << zPos << std::endl;
+    // std::cout << "Part 2 for at " << xPos << ", " << zPos << std::endl;
 
 
-    for(int y = 0; y < 255; y++) {
-        for (int x = xPos; x < 16*WinChunks + xPos; x++) {
-            for (int z = zPos; z < 16*WinChunks + zPos; z++) {
-                if(getGlobalBlockAt(x, y, z) == EMPTY) {
-                    continue;
-                } else if (getGlobalBlockAt(x, y, z) == GRASS) {
-                    if(getGlobalBlockAt(x, y+1, z) == EMPTY|| getGlobalBlockAt(x, y+1, z) == WATER || y == 255) {
-                        setGlobalBlockAt(x, y, z, GRASS);
-                    }
-                    else {
-                        setGlobalBlockAt(x, y, z, STONE);
-                    }
-                } else if (getGlobalBlockAt(x, y, z) == STONE) {
-                    if(getGlobalBlockAt(x, y+1, z) == EMPTY || getGlobalBlockAt(x, y+1, z) == WATER || y == 255) {
-                        setGlobalBlockAt(x, y, z, SNOW);
-                    }
-                    else {
-                        setGlobalBlockAt(x, y, z, STONE);
-                    }
-                }
-            }
-        }
-    }
+
+    // for(int y = 0; y < 255; y++) {
+    //     for (int x = xPos; x < 16*WinChunks + xPos; x++) {
+    //         for (int z = zPos; z < 16*WinChunks + zPos; z++) {
+    //             if (y <= 8 * PerlinNoise(x / 20.37, 100, z /20.37) + 60) {
+    //                 setGlobalBlockAt(x, y, z, STONE);
+    //             }
+    //         }
+    //     }
+    // }
 
     std::cout << "Part 3 for at " << xPos << ", " << zPos << std::endl;
 
