@@ -42,21 +42,42 @@ out vec4 fs_ShadowPos;
 const vec4 lightDir = normalize(vec4(500, 258, 0, 0));  // The direction of our virtual light, which is used to compute the shading of
                                         // the geometry in the fragment shader.
 
+uniform float u_Time;
+
 void main()
 {
-    fs_Pos = vs_Pos;
+    vec3 position = vec3(vs_Pos);
+    vec3 normal = vec3(vs_Nor);
+
+    if (vs_UV.z == 1.0) { //water block
+        //gentle waves
+        float waveAmplitude = 0.1;
+        float waveFrequency = 1.0;
+        float waveSpeed = 0.03;
+
+        //displace position
+        position.y += waveAmplitude * sin(waveFrequency * position.x + waveSpeed * u_Time)
+                                   * cos(waveFrequency * position.z + waveSpeed * u_Time);
+
+        //calculate normals based on slope of wave
+        float dx = waveAmplitude * waveFrequency * cos(waveFrequency * position.x + waveSpeed * u_Time);
+        float dz = -waveAmplitude * waveFrequency * sin(waveFrequency * position.z + waveSpeed * u_Time);
+        normal = normalize(vec3(-dx, 1.0, -dz));
+    }
+
+    fs_Pos = vec4(position, 1.0);
 /*    fs_Col = vs_Col; */                        // Pass the vertex colors to the fragment shader for interpolation
     fs_UV = vs_UV;
 
     mat3 invTranspose = mat3(u_ModelInvTr);
-    fs_Nor = vec4(invTranspose * vec3(vs_Nor), 0);          // Pass the vertex normals to the fragment shader for interpolation.
+    fs_Nor = vec4(invTranspose * normal, 0);          // Pass the vertex normals to the fragment shader for interpolation.
                                                             // Transform the geometry's normals by the inverse transpose of the
                                                             // model matrix. This is necessary to ensure the normals remain
                                                             // perpendicular to the surface after the surface is transformed by
                                                             // the model matrix.
 
 
-    vec4 modelposition = u_Model * vs_Pos;   // Temporarily store the transformed vertex positions for use below
+    vec4 modelposition = u_Model * vec4(position, 1.0);   // Temporarily store the transformed vertex positions for use below
 
     fs_LightVec = (lightDir);  // Compute the direction in which the light source lies
 

@@ -12,8 +12,9 @@
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
-      m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_texture(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 130.f, 48.f), m_terrain),
+      m_progLambert(this), m_progFlat(this), m_progSky(this), m_progInstanced(this), m_texture(this),
+      m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
+      m_quad(this),
       m_inputs(), m_timer(), m_startTime(QDateTime::currentMSecsSinceEpoch()),
       m_lastTime(QDateTime::currentMSecsSinceEpoch()),
       progPostProcess(this),
@@ -77,6 +78,8 @@ void MyGL::initializeGL()
     postProcessFBO.create();
     shadowFBO.create(true);
 
+    m_progSky.create(":/glsl/sky.vert.glsl", ":/glsl/sky.frag.glsl");
+
 if (!QFile(":/textures/minecraft_textures_all.png").exists()){
         std::cerr << "error: tex file not found" << std::endl;
     } else {
@@ -96,6 +99,12 @@ if (!QFile(":/textures/minecraft_textures_all.png").exists()){
             std::cout << "COokie" << std::endl;
         }
     }
+    //create sky quad
+    m_quad.create();
+
+    // glBindVertexArray(0);
+    // glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
@@ -122,6 +131,10 @@ void MyGL::resizeGL(int w, int h) {
     shadowFBO.resize(8192/this->devicePixelRatio(), 8192/this->devicePixelRatio(), this->devicePixelRatio());
     shadowFBO.destroy();
     shadowFBO.create();
+    //position sky
+    glm::mat4 viewProjInv = glm::inverse(viewproj);
+    m_progSky.setUnifMat4("u_ViewProjInv", viewProjInv);
+    m_progSky.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
 
     printGLErrorLog();
 }
@@ -235,9 +248,24 @@ void MyGL::paintGL() {
     this->glUniform1i(m_progLambert.m_unifs["u_ShadowMap"], shadowFBO.getTextureSlot());
 
     glm::mat4 viewproj = m_player.mcr_camera.getViewProj();
+
+    glDisable(GL_CULL_FACE);
+    // glDisable(GL_DEPTH_TEST);
+
+    m_progSky.useMe();
+    glm::mat4 viewProjInv = glm::inverse(viewproj);
+    m_progSky.setUnifMat4("u_ViewProjInv", viewProjInv);
+    m_progSky.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
+    m_progSky.drawSky(m_quad);
+    m_progSky.setUnifFloat("u_Time", m_time);
+
+    // glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+  
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
     m_progLambert.setUnifMat4("u_Model", glm::mat4());
     m_progLambert.setUnifMat4("u_ModelInvTr", glm::mat4());
+    m_progLambert.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
 

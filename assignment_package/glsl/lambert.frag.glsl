@@ -15,6 +15,7 @@ uniform vec4 u_Color = vec4(0.0, 1.0, 0.0, 1.0); // The color with which to rend
 uniform sampler2D u_Texture;
 uniform float u_Time;
 uniform sampler2D u_ShadowMap;
+uniform vec3 u_CameraPos;
 
 // These are the interpolated values out of the rasterizer, so you can't know
 // their specific values without knowing the vertices that contributed to them
@@ -35,7 +36,26 @@ void main()
     if (fs_UV.z == 2.0) { // lava
         uv.x += mod(u_Time * 0.0007, 1.0 / 16.0);
     } else if (fs_UV.z == 1.0) { // water
-        uv.x += mod(u_Time * 0.001, 1.0 / 16.0);
+        uv.x += mod(u_Time * 0.002, 1.0 / 10.0); //horizontal movement
+
+        //blinn-phong
+        vec3 N = normalize(vec3(fs_Nor));
+        vec3 V = normalize(u_CameraPos - fs_Pos.xyz);
+        vec3 L = normalize(fs_LightVec.xyz);
+        vec3 H = normalize(V + L);
+
+        vec3 ambient = 0.6 * texture(u_Texture, fs_UV.xy).rgb;
+
+        float diff = max(dot(N, L), 0.0);
+        vec3 diffuse = diff * texture(u_Texture, fs_UV.xy).rgb;
+
+        const float exp = 16.0;
+        vec3 specular = pow(max(dot(H, N), 0.0), exp) * vec3(1.0);
+
+        vec3 finalColor = ambient + diffuse + specular;
+        out_Col = vec4(finalColor, 1.0);
+
+        return;
     }
 
     float cosTheta = clamp(dot(fs_Nor, fs_LightVec), 0.0, 1.0);
