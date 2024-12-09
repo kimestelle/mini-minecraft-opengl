@@ -13,7 +13,7 @@ MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
       m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_texture(this),
-      m_terrain(this), m_player(glm::vec3(48.f, 130.f, 48.f), m_terrain),
+      m_terrain(this), m_player(glm::vec3(47.f, 164.f, 170.f), m_terrain),
       m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch()),
       progPostProcess(this),
       postProcessFBO(this, width(), height(), this->devicePixelRatio()),

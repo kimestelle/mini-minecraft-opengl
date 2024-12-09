@@ -306,6 +306,7 @@ void Terrain::CreateTestScene() {
 
 
 float PerlinNoise(float x, float y, float z);
+float voronoiNoise(const glm::vec2& position, int seed);
 
 
 void Terrain::GenerateTerrain(int xPos, int zPos)  {
@@ -338,23 +339,48 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
         }
     }
 
-    std::cout << "Part 1 for at " << xPos << ", " << zPos << std::endl;
-
     // Create the basic terrain floor
-    for(int y = 0; y < 256; y++) {
-        for (int x = xPos; x < 16*WinChunks + xPos; x++) {
-            for (int z = zPos; z < 16*WinChunks + zPos; z++) {
-                float noise;
-                bool isEmpty = true;
+    for (int x = xPos; x < 16*WinChunks + xPos; x++) {
+        for (int z = zPos; z < 16*WinChunks + zPos; z++) {
 
-                float typeTerrain = PerlinNoise(x * 0.01f * 1.5346 + 0.3246, z * 0.01f * 1.5346 + 0.8756, 0);
+            float max = 0;
+            float noiseVal = 0.0f;
+
+            for (int i = 0; i < 4; i++) {
+                float lacunarity = glm::pow(2.0f, (float)i);
+                float persistance = glm::pow(0.6f, (float)i);
+                max += persistance;
+
+                noiseVal += persistance * PerlinNoise(x * 0.007 * lacunarity, 20.12 * i, z * 0.007 * lacunarity);
+            }
+
+            // noiseVal /= max;
+            noiseVal -= 0.2;
+            noiseVal = glm::max(0.0f, noiseVal);
+            noiseVal *= (noiseVal * 0.8f);
+
+
+            // noiseVal *= 40;
+            // noiseVal += 129;
+
+            // if (vNoise > 0.2f) {
+            //     if(noiseVal <= 155.0f) {
+            //         float separator = noiseVal - 129;
+            //         noiseVal = 155 - (separator / 35.0f);
+            //     }
+            // }
+
+            float typeTerrain = PerlinNoise(x * 0.004, 53.23, z * 0.004);
+
+            for(int y = 0; y < 256; y++) {
+                bool isEmpty = true;
                 if (y == 0) {
                     setGlobalBlockAt(x, y, z, BEDROCK);
                     isEmpty = false;
                 } else if (y <= 128) {
-                    noise = PerlinNoise(0.1*x, 0.1*z, 0.1*y);
+                    float noise = PerlinNoise(0.1*x, 0.1*z, 0.1*y);
                     // I know instructions say negative but I find this produces a nice looking result
-                    if (noise < 0.3) {
+                    if (noise < 0.5) {
                         if (y<25) {
                             setGlobalBlockAt(x, y, z, LAVA);
                             isEmpty = false;
@@ -366,42 +392,54 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                         isEmpty = false;
                     }
                 } else if (y == 129) {
-                    noise = PerlinNoise(0.05 * x * 0.6237f, 0.05 * z * 0.6237f, 0);
-                    if (typeTerrain < 0.5) {
-                        if(noise >= (0.3)) {
-                            setGlobalBlockAt(x, y, z, GRASS);
-                            isEmpty = false;
-                        }
-                    } else {
-                        if(noise >= (0.3)) {
-                            setGlobalBlockAt(x, y, z, STONE);
-                            isEmpty = false;
-                        }
-                    }
+                    setGlobalBlockAt(x, y, z, STONE);
+                    isEmpty = false;
                 }
                 else {
-                    noise = PerlinNoise(0.05 * x * 0.6237f, 0.05 * z * 0.6237f, 0);
-                    float rand;
-                    if (typeTerrain < 0.5) {
-                        rand = noise - 0.06 * (y - 130);
 
-                        if(rand > 0.35f) {
-                            setGlobalBlockAt(x, y, z, GRASS);
-                            isEmpty = false;
-                        }
+                    float temp = noiseVal;
+
+                    if(typeTerrain > 0.6f) {
+                        temp *= 40;
+                        temp += 129;
                     } else {
-                        rand = (noise * glm::min(2.0f, 1.0f)) - 0.03 * (y - 130);
-                        // rand *= typeTerrain;
+                        temp *= 20;
+                        temp += 129 + 20;
+                    }
 
-                        if(rand > 0.35f) {
-                            setGlobalBlockAt(x, y, z, STONE);
+                    // std::vector<float> noise{};
+                    if(y <= temp) {
+                        //land generation
+
+                        //Generic Land
+                        if(typeTerrain > 0.6f) {
+
+                            if(y <= 160) {
+                                if(y+1 > 145) {
+                                    setGlobalBlockAt(x, y, z, GRASS);
+                                } else {
+                                    setGlobalBlockAt(x, y, z, DIRT);
+                                }
+                            }
+                            else {
+                                if (y < 180) {
+                                    setGlobalBlockAt(x, y, z, STONE);
+                                } else {
+                                    if(y+1 > 180) {
+                                        setGlobalBlockAt(x, y, z, SNOW);
+                                    } else {
+                                        setGlobalBlockAt(x, y, z, STONE);
+                                    }
+                                }
+                            }
+                            isEmpty = false;
+                        } else {
+                            setGlobalBlockAt(x, y, z, SAND  );
                             isEmpty = false;
                         }
+                    } else if (y <= 145) {
+                        setGlobalBlockAt(x, y, z, WATER);
                     }
-                }
-
-                if(isEmpty && y < 130 && y >= 125) {
-                    setGlobalBlockAt(x, y, z, WATER);
                 }
             }
         }
@@ -508,6 +546,47 @@ float PerlinNoise(float x, float y, float z) {
     float y2 = glm::mix(x1, x2, v);
 
     return glm::mix(y1, y2, w) * 0.5f + 0.5f; // Normalize the result to [0, 1]
+}
+
+
+
+
+
+float voronoiNoise(const glm::vec2& position, int seed) {
+    // Helper to generate a pseudo-random 2D point in a cell
+    auto randomPointInCell = [](const glm::ivec2& cell, int seed) -> glm::vec2 {
+        int hash = cell.x * 73856093 ^ cell.y * 19349663 ^ seed;
+        srand(hash);
+        return glm::vec2(static_cast<float>(rand()) / RAND_MAX, static_cast<float>(rand()) / RAND_MAX);
+    };
+
+    // Determine the base cell of the input position
+    glm::ivec2 baseCell = glm::floor(position);
+
+    // Track the minimum distance
+    float minDist = std::numeric_limits<float>::max();
+
+    // Iterate through neighboring cells
+    for (int y = -1; y <= 1; ++y) {
+        for (int x = -1; x <= 1; ++x) {
+            glm::ivec2 neighborCell = baseCell + glm::ivec2(x, y);
+
+            // Generate feature point in the neighbor cell
+            glm::vec2 featurePoint = randomPointInCell(neighborCell, seed) + glm::vec2(neighborCell);
+
+            // Calculate the distance from the feature point to the input position
+            float dist = glm::distance(position, featurePoint);
+
+            // Update the minimum distance
+            if (dist < minDist) {
+                minDist = dist;
+            }
+        }
+    }
+
+    // Normalize the distance to the range [0, 1]
+    float maxDist = std::sqrt(8.0f); // Maximum distance in a 2x2 grid
+    return minDist / maxDist;
 }
 
 

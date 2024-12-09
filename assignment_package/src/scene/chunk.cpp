@@ -87,6 +87,14 @@ std::unordered_map<BlockType, std::unordered_map<Direction, glm::vec2>> blockUVM
             {YNEG, glm::vec2(14, 1)},
             {ZPOS, glm::vec2(14, 1)},
             {ZNEG, glm::vec2(14, 1)},
+            }},
+    {SAND, {
+            {XPOS, glm::vec2(0, 4)},
+            {XNEG, glm::vec2(0, 4)},
+            {YPOS, glm::vec2(0, 4)},
+            {YNEG, glm::vec2(0, 4)},
+            {ZPOS, glm::vec2(0, 4)},
+            {ZNEG, glm::vec2(0, 4)},
             }}
 };
 
@@ -131,6 +139,10 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
     case ZPOS: vertices[0] = glm::vec4(0, 0, 1, 1); vertices[1] = glm::vec4(1, 0, 1, 1); vertices[2] = glm::vec4(1, 1, 1, 1); vertices[3] = glm::vec4(0, 1, 1, 1); normal = glm::vec4(0, 0, 1, 0); break;
     case ZNEG: vertices[0] = glm::vec4(0, 0, 0, 1); vertices[1] = glm::vec4(1, 0, 0, 1); vertices[2] = glm::vec4(1, 1, 0, 1); vertices[3] = glm::vec4(0, 1, 0, 1); normal = glm::vec4(0, 0, -1, 0);  break;
     }
+
+    // if (t == WATER && dir != YPOS) {
+    //     return;
+    // }
 
     glm::vec2 baseUV = getUV(t, dir);
     std::vector<glm::vec2> faceUVs = {
