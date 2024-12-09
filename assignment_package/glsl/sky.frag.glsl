@@ -190,7 +190,7 @@ void main() {
     float angle = acos(dot(rayDir, sunDir)) * 180.0 / PI;
 
     // glow
-    float sunSize = 30.0;
+    float sunSize = 7.5;
     if (angle < sunSize) {
         if (angle < 7.5) {
             sun = sunColor; //yellow
