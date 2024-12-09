@@ -39,7 +39,7 @@ out vec4 fs_LightVec;       // The direction in which our virtual light lies, re
 out vec4 fs_UV;
 out vec4 fs_ShadowPos;
 
-const vec4 lightDir = normalize(vec4(250, 258, 0, 0));  // The direction of our virtual light, which is used to compute the shading of
+const vec4 lightDir = normalize(vec4(500, 258, 0, 0));  // The direction of our virtual light, which is used to compute the shading of
                                         // the geometry in the fragment shader.
 
 void main()
