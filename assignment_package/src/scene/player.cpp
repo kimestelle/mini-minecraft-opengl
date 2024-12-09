@@ -73,7 +73,7 @@ void Player::processInputs(InputBundle &inputs) {
                 this->m_acceleration *= grounded ? 50.f : 15.f;
             }
             if (submerged) {
-                this->m_acceleration *= 0.66f;
+                this->m_acceleration *= 0.33f;
                 if (inputs.spacePressed) {
                     this->m_velocity.y = 3.f;
                 }

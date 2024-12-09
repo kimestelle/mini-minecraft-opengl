@@ -17,7 +17,9 @@ MyGL::MyGL(QWidget *parent)
       m_inputs(), m_timer(), m_lastTime(QDateTime::currentMSecsSinceEpoch()),
       progPostProcess(this),
       postProcessFBO(this, width(), height(), this->devicePixelRatio()),
-      quadDrawable(this)
+      quadDrawable(this),
+      progShadows(this),
+      shadowFBO(this, 1024/this->devicePixelRatio(), 1024/this->devicePixelRatio(), this->devicePixelRatio())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -69,13 +71,15 @@ void MyGL::initializeGL()
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
     // m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
     progPostProcess.create(":/glsl/passthrough.vert.glsl", ":/glsl/postprocess.frag.glsl");
-    postProcessFBO.create();
+    progShadows.create(":/glsl/shadows.vert.glsl", ":/glsl/shadows.frag.glsl");
 
-    progPostProcess.addUniform("u_Texture");
+    postProcessFBO.create();
+    shadowFBO.create();
+
 if (!QFile(":/textures/minecraft_textures_all.png").exists()){
         std::cerr << "error: tex file not found" << std::endl;
     } else {
-        m_texture.create(":/textures/minecraft_textures_all.png", GL_RGBA, GL_RGBA);
+        m_texture.create(":/textures/minecraft_textures_all.png", GL_RGBA, GL_BGRA);
     }
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //transparency effect
@@ -113,6 +117,11 @@ void MyGL::resizeGL(int w, int h) {
     postProcessFBO.resize(w, h, this->devicePixelRatio());
     postProcessFBO.destroy();
     postProcessFBO.create();
+
+    shadowFBO.resize(1024/this->devicePixelRatio(), 1024/this->devicePixelRatio(), this->devicePixelRatio());
+    shadowFBO.destroy();
+    shadowFBO.create();
+
     printGLErrorLog();
 }
 
@@ -183,6 +192,30 @@ void MyGL::sendPlayerDataToGUI() const {
 // MyGL's constructor links update() to a timer that fires 60 times per second,
 // so paintGL() called at a rate of 60 frames per second.
 void MyGL::paintGL() {
+    //bind to shadow mapping setup
+    glm::vec3 lightInvDir = glm::vec3(0.5, 1, 0.75);
+    shadowFBO.bindFrameBuffer();
+    glViewport(0, 0, 1024, 1024);
+    glClearColor(1.f, 1.f, 1.f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+
+    glm::mat4 depthProjectionMatrix = glm::ortho<float>(-100,100,-100,100,-100,200);
+    glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::vec3(0,1,0));
+    glm::mat4 depthModelMatrix = glm::mat4(1.0);
+    glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * depthModelMatrix;
+
+    progShadows.setUnifMat4("u_DepthMVP", depthMVP);
+    renderTerrain(progShadows);
+
+    glm::mat4 biasMatrix(
+        0.5, 0.0, 0.0, 0.0,
+        0.0, 0.5, 0.0, 0.0,
+        0.0, 0.0, 0.5, 0.0,
+        0.5, 0.5, 0.5, 1.0
+        );
+    glm::mat4 depthBiasMVP = biasMatrix*depthMVP;
+
     //redirect to postprocess
     postProcessFBO.bindFrameBuffer();
     glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
@@ -190,6 +223,12 @@ void MyGL::paintGL() {
     // Clear the screen so that we only see newly drawn images
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
+
+    shadowFBO.bindToTextureSlot(1);
+    m_progLambert.setUnifMat4("u_DepthBiasMVP", depthBiasMVP);
+    m_texture.bind(0);
+    m_progLambert.useMe();
+    this->glUniform1i(m_progLambert.m_unifs["u_ShadowMap"], shadowFBO.getTextureSlot());
 
     glm::mat4 viewproj = m_player.mcr_camera.getViewProj();
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
@@ -201,8 +240,7 @@ void MyGL::paintGL() {
     m_progLambert.setUnifFloat("u_Time", m_time++);
     progPostProcess.setUnifFloat("u_Time", m_time);
 
-    m_texture.bind(0);
-    renderTerrain();
+    renderTerrain(m_progLambert);
 
     glDisable(GL_DEPTH_TEST);
     m_progFlat.setUnifMat4("u_Model", glm::mat4());
@@ -219,7 +257,7 @@ void MyGL::paintGL() {
     printGLErrorLog();
     // Place the texture that stores the image of the 3D render
     // into texture slot 0
-    postProcessFBO.bindToTextureSlot(0);
+    postProcessFBO.bindToTextureSlot(2);
     printGLErrorLog();
 
     // Set the sampler2D in the post-process shader to
@@ -249,7 +287,7 @@ void MyGL::paintGL() {
 // TODO: Change this so it renders the nine zones of generated
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
-void MyGL::renderTerrain() {
+void MyGL::renderTerrain(ShaderProgram &prog) {
     int x = m_player.mcr_position.x;
     int z = m_player.mcr_position.z;
 
@@ -262,7 +300,7 @@ void MyGL::renderTerrain() {
     //     }
     // }
 
-    m_terrain.draw( x - 64, x + 64, z-64, z+64, &m_progLambert);
+    m_terrain.draw( x - 64, x + 64, z-64, z+64, &prog);
 
 }
 

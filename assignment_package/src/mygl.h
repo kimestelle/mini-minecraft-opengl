@@ -50,6 +50,9 @@ private:
     FrameBuffer postProcessFBO; // framebuffer for post-process
     Quad quadDrawable;
 
+    ShaderProgram progShadows; // shader for shadow mapping
+    FrameBuffer shadowFBO; // framebuffer for shadow mapping
+
 
 public:
     explicit MyGL(QWidget *parent = nullptr);
@@ -68,7 +71,7 @@ public:
 
     // Called from paintGL().
     // Calls Terrain::draw().
-    void renderTerrain();
+    void renderTerrain(ShaderProgram &shader);
 
 protected:
     // Automatically invoked when the user

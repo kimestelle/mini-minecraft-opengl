@@ -14,6 +14,7 @@
 uniform vec4 u_Color = vec4(0.0, 1.0, 0.0, 1.0); // The color with which to render this instance of geometry.
 uniform sampler2D u_Texture;
 uniform float u_Time;
+uniform sampler2DShadow u_ShadowMap;
 
 // These are the interpolated values out of the rasterizer, so you can't know
 // their specific values without knowing the vertices that contributed to them
@@ -21,6 +22,7 @@ in vec4 fs_Pos;
 in vec4 fs_Nor;
 in vec4 fs_LightVec;
 in vec4 fs_UV;
+in vec4 fs_ShadowPos;
 
 out vec4 out_Col; // This is the final output color that you will see on your
 // screen for the pixel that is currently being processed.
@@ -37,6 +39,7 @@ void main()
     }
 
     vec4 texColor = texture(u_Texture, uv);
+    float visibility = texture( u_ShadowMap, vec3(fs_ShadowPos.xy, (fs_ShadowPos.z)/fs_ShadowPos.w ));
 
     // Calculate the diffuse term for Lambert shading
     float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
@@ -44,7 +47,9 @@ void main()
     diffuseTerm = clamp(diffuseTerm, 0, 1);
 
     float ambientTerm = 0.5;
-    float lightIntensity = diffuseTerm + ambientTerm;   //Add a small float value to the color multiplier
+    /*float lightIntensity = (diffuseTerm * visibility) + ambientTerm;*/
+    float lightIntensity = visibility;
+    //Add a small float value to the color multiplier
     //to simulate ambient lighting. This ensures that faces that are not
     //lit by our point light are not completely black.
 

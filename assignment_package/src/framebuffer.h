@@ -24,7 +24,7 @@ public:
     void resize(unsigned int width, unsigned int height,
                 float devicePixelRatio);
     // Initialize all GPU-side data required
-    void create();
+    void create(bool depth = false);
     // Deallocate all GPU-side data
     void destroy();
     void bindFrameBuffer();

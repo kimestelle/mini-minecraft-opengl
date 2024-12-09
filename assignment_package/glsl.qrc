@@ -7,5 +7,7 @@
         <file>glsl/instanced.vert.glsl</file>
         <file>glsl/passthrough.vert.glsl</file>
         <file>glsl/postprocess.frag.glsl</file>
+        <file>glsl/shadows.vert.glsl</file>
+        <file>glsl/shadows.frag.glsl</file>
     </qresource>
 </RCC>
