@@ -105,6 +105,8 @@ void Texture::create(const char *texturePath,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 
     // Only bother to set up a QImage to read the texture file
     // if there *is* a texture file. If there's not, then this
@@ -130,9 +132,15 @@ void Texture::bufferPixelData(unsigned int width, unsigned int height,
                               GLvoid *pixels) {
     glContext->glActiveTexture(GL_TEXTURE0);
     glContext->glBindTexture(GL_TEXTURE_2D, m_textureHandle);
-    glContext->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-                            width, height,
-                            0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+    if (internalFormat == GL_DEPTH_COMPONENT16) {
+        glContext->glTexImage2D(GL_TEXTURE_2D, 0, internalFormat,
+                                width, height,
+                                0, format, GL_FLOAT, pixels);
+    } else {
+        glContext->glTexImage2D(GL_TEXTURE_2D, 0, internalFormat,
+                                width, height,
+                                0, format, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+    }
 }
 
 void Texture::bind(int texSlot = 0)

@@ -12,13 +12,16 @@
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
-    m_progLambert(this), m_progFlat(this), m_progSky(this), m_progInstanced(this), m_texture(this),
+      m_progLambert(this), m_progFlat(this), m_progSky(this), m_progInstanced(this), m_texture(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
-    m_quad(this),
-    m_inputs(), m_timer(), m_time(0.f), m_lastTime(QDateTime::currentMSecsSinceEpoch()),
+      m_quad(this),
+      m_inputs(), m_timer(), m_startTime(QDateTime::currentMSecsSinceEpoch()),
+      m_lastTime(QDateTime::currentMSecsSinceEpoch()),
       progPostProcess(this),
       postProcessFBO(this, width(), height(), this->devicePixelRatio()),
-      quadDrawable(this)
+      quadDrawable(this),
+      progShadows(this),
+      shadowFBO(this, 8192/this->devicePixelRatio(), 8192/this->devicePixelRatio(), this->devicePixelRatio())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -70,15 +73,17 @@ void MyGL::initializeGL()
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
     // m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
     progPostProcess.create(":/glsl/passthrough.vert.glsl", ":/glsl/postprocess.frag.glsl");
+    progShadows.create(":/glsl/shadows.vert.glsl", ":/glsl/shadows.frag.glsl");
+
     postProcessFBO.create();
-    progPostProcess.addUniform("u_Texture");
+    shadowFBO.create(true);
 
     m_progSky.create(":/glsl/sky.vert.glsl", ":/glsl/sky.frag.glsl");
 
 if (!QFile(":/textures/minecraft_textures_all.png").exists()){
         std::cerr << "error: tex file not found" << std::endl;
     } else {
-        m_texture.create(":/textures/minecraft_textures_all.png", GL_RGBA, GL_RGBA);
+        m_texture.create(":/textures/minecraft_textures_all.png", GL_RGBA, GL_BGRA);
     }
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //transparency effect
@@ -89,9 +94,9 @@ if (!QFile(":/textures/minecraft_textures_all.png").exists()){
 
     for(int i = -1; i <= 1; i++) {
         for(int j = -1; j <= 1; j++) {
-            // std::cout << x + i * 64 << ", " << z + j * 64 << std::endl;
+            std::cout << x + i * 64 << ", " << z + j * 64 << std::endl;
             m_terrain.GenerateTerrain(x + i * 64, z + j * 64);
-            // std::cout << "COokie" << std::endl;
+            std::cout << "COokie" << std::endl;
         }
     }
     //create sky quad
@@ -119,6 +124,13 @@ void MyGL::resizeGL(int w, int h) {
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
 
+    postProcessFBO.resize(w, h, this->devicePixelRatio());
+    postProcessFBO.destroy();
+    postProcessFBO.create();
+
+    shadowFBO.resize(8192/this->devicePixelRatio(), 8192/this->devicePixelRatio(), this->devicePixelRatio());
+    shadowFBO.destroy();
+    shadowFBO.create();
     //position sky
     glm::mat4 viewProjInv = glm::inverse(viewproj);
     m_progSky.setUnifMat4("u_ViewProjInv", viewProjInv);
@@ -194,13 +206,47 @@ void MyGL::sendPlayerDataToGUI() const {
 // MyGL's constructor links update() to a timer that fires 60 times per second,
 // so paintGL() called at a rate of 60 frames per second.
 void MyGL::paintGL() {
-    //redirect to postprocess
-    // postProcessFBO.bindFrameBuffer();
-    glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
-
-    // Clear the screen so that we only see newly drawn images
-    // glClearColor(0.f, 0.f, 0.f, 1.f);
+    //bind to shadow mapping setup
+    glm::vec3 lightInvDir = glm::vec3(200, 150, 0);
+    shadowFBO.bindFrameBuffer();
+    glViewport(0, 0, 8192, 8192);
+    glClearColor(1.f, 1.f, 1.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+
+    glm::mat4 depthProjectionMatrix = glm::ortho<float>(-300,300,-300,300, 2, 500);
+    glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir, glm::vec3(0,0,0), glm::normalize(glm::cross(lightInvDir, glm::vec3(0, 0, 1))));
+    glm::mat4 depthModelMatrix = glm::mat4(1.0);
+    glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * depthModelMatrix;
+
+    progShadows.setUnifMat4("u_DepthMVP", depthMVP);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+    renderTerrain(progShadows);
+    glDisable(GL_CULL_FACE);
+
+    glm::mat4 biasMatrix(
+        0.5, 0.0, 0.0, 0.0,
+        0.0, 0.5, 0.0, 0.0,
+        0.0, 0.0, 0.5, 0.0,
+        0.5, 0.5, 0.5, 1.0
+        );
+    glm::mat4 depthBiasMVP = biasMatrix*depthMVP;
+
+    // redirect to postprocess
+    postProcessFBO.bindFrameBuffer();
+    glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
+    glClearColor(0.37f, 0.74f, 1.0f, 1);
+    // Clear the screen so that we only see newly drawn images
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+
+    shadowFBO.bindToTextureSlot(1);
+    m_progLambert.setUnifMat4("u_DepthBiasMVP", depthBiasMVP);
+    m_texture.bind(0);
+    m_progLambert.useMe();
+    this->glUniform1i(m_progLambert.m_unifs["u_ShadowMap"], shadowFBO.getTextureSlot());
+
     glm::mat4 viewproj = m_player.mcr_camera.getViewProj();
 
     glDisable(GL_CULL_FACE);
@@ -225,8 +271,9 @@ void MyGL::paintGL() {
 
     m_progLambert.setUnifFloat("u_Time", m_time++);
 
-    m_texture.bind(0);
-    renderTerrain();
+    progPostProcess.setUnifFloat("u_Time", (QDateTime::currentMSecsSinceEpoch() - m_startTime) / 1000.f);
+
+    renderTerrain(m_progLambert);
 
     glDisable(GL_DEPTH_TEST);
     m_progFlat.setUnifMat4("u_Model", glm::mat4());
@@ -234,34 +281,47 @@ void MyGL::paintGL() {
     glEnable(GL_DEPTH_TEST);
 
     // draw post process
-    // glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
-    // glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
+    glBindFramebuffer(GL_FRAMEBUFFER, this->defaultFramebufferObject());
+    glViewport(0, 0, width() * this->devicePixelRatio(), height() * this->devicePixelRatio());
 
-    // glClearColor(0.f, 0.f, 0.f, 1.f);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.f, 0.f, 0.f, 1.f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // printGLErrorLog();
+    printGLErrorLog();
     // Place the texture that stores the image of the 3D render
     // into texture slot 0
-    // postProcessFBO.bindToTextureSlot(0);
-    // printGLErrorLog();
+    postProcessFBO.bindToTextureSlot(2);
+    printGLErrorLog();
 
     // Set the sampler2D in the post-process shader to
     // read from the texture slot that we set the
     // texture into
-    // progPostProcess.useMe();
+    progPostProcess.useMe();
 
-    // this->glUniform1i(progPostProcess.m_unifs["u_Texture"],
-    //                    postProcessFBO.getTextureSlot());
+    this->glUniform1i(progPostProcess.m_unifs["u_Texture"],
+                       postProcessFBO.getTextureSlot());
+    progPostProcess.setUnifVec2("u_Resolution", glm::vec2(this->width() * this->devicePixelRatio(), this->height() * this->devicePixelRatio()));
+
+    // Check camera position to determine post process effect
+    if (m_terrain.hasChunkAt(m_player.mcr_position.x, m_player.mcr_position.z)) {
+        BlockType block = m_terrain.getGlobalBlockAt(m_player.mcr_position.x, m_player.mcr_position.y+1.5f, m_player.mcr_position.z);
+        if (block == WATER) {
+            this->glUniform1i(progPostProcess.m_unifs["u_PostEffect"], 1);
+        } else if (block == LAVA) {
+            this->glUniform1i(progPostProcess.m_unifs["u_PostEffect"], 2);
+        } else {
+            this->glUniform1i(progPostProcess.m_unifs["u_PostEffect"], 0);
+        }
+    }
 
     // draw quad with post shader
-    // progPostProcess.drawOpq(quadDrawable);
+    progPostProcess.drawOpq(quadDrawable);
 }
 
 // TODO: Change this so it renders the nine zones of generated
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
-void MyGL::renderTerrain() {
+void MyGL::renderTerrain(ShaderProgram &prog) {
     int x = m_player.mcr_position.x;
     int z = m_player.mcr_position.z;
 
@@ -274,7 +334,7 @@ void MyGL::renderTerrain() {
     //     }
     // }
 
-    m_terrain.draw( x - 64, x + 64, z-64, z+64, &m_progLambert);
+    m_terrain.draw( x - 64, x + 64, z-64, z+64, &prog);
 
 }
 
@@ -395,14 +455,41 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
             currPos.z = glm::round(currPos.z);
             currPos.z = ray.z >= 0 ? currPos.z + 0.01f : currPos.z - 0.01f;
         }
-        if (m_terrain.hasChunkAt(currPos.x, currPos.z) && m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z) != EMPTY) {
+        if (m_terrain.hasChunkAt(currPos.x, currPos.z)){
+            BlockType block = m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z);
+            if (block == EMPTY || block == WATER || block == LAVA) {
+                continue;
+            }
             switch (e->button()) {
                 case Qt::LeftButton:
                 std::cout << "remove block" << std::endl;
-                    //ERROR: WHEN DESTROYING THE BLOCK AT THE EDGE OF A CHUNK, WE DO NOT UPDATE THE VBO OF THE NEIGHBORING CHUNK
                     if (m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z) != BEDROCK) {
                         m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
-                        m_terrain.getChunkAt(currPos.x, currPos.z)->createVBOdata();
+
+                        auto myChunk = m_terrain.getChunkAt(currPos.x, currPos.z).get();
+
+                        for(int i = -1; i <= 1; i++) {
+                            for(int j = -1; j <= 1; j++) {
+                                if ((i != 0 && j != 0) || (i == 0 && j == 0)) {
+                                    continue;
+                                }
+
+                                if (myChunk != m_terrain.getChunkAt(currPos.x + i, currPos.z + j).get()) {
+                                    auto chunk = m_terrain.getChunkAt(currPos.x + i, currPos.z + j).get();
+                                    chunk->createVBOdata();
+                                    chunk->loadToGPU();
+                                }
+                            }
+                        }
+
+                        myChunk->createVBOdata();
+                        myChunk->loadToGPU();
+                        // m_terrain.getChunkAt(currPos.x, currPos.z)->loaded = false;                        m_terrain.getChunkAt(currPos.x, currPos.z)->createVBOdata();
+                        // m_terrain.getChunkAt(currPos.x, currPos.z)->ready = true;
+                        // m_terrain.getChunkAt(currPos.x, currPos.z)->loaded = false;
+                        // m_terrain.getChunkAt(currPos.x, currPos.z)->ready = true;
+                        // m_terrain.loadChunkVBOs();
+                        // m_terrain.loadChunkVBOs();
                     }
                     break;
                 case Qt::RightButton:

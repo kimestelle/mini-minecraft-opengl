@@ -2,18 +2,18 @@
 #include <QString>
 
 const glm::vec3 Player::corners[12] = {
-    glm::vec3(-0.5f, 0.f, -0.5f),
-    glm::vec3(-0.5f, 0.f, 0.5f),
-    glm::vec3(-0.5f, 2.0f, -0.5f),
-    glm::vec3(-0.5f, 2.0f, 0.5f),
-    glm::vec3(-0.5f, 1.0f, -0.5f),
-    glm::vec3(-0.5f, 1.0f, 0.5f),
-    glm::vec3(0.5f, 0.f, -0.5f),
-    glm::vec3(0.5f, 0.f, 0.5f),
-    glm::vec3(0.5f, 2.0f, -0.5f),
-    glm::vec3(0.5f, 2.0f, 0.5f),
-    glm::vec3(0.5f, 1.0f, -0.5f),
-    glm::vec3(0.5f, 1.0f, 0.5f)
+    0.9f * glm::vec3(-0.5f, 0.f, -0.5f),
+    0.9f * glm::vec3(-0.5f, 0.f, 0.5f),
+   0.9f *  glm::vec3(-0.5f, 2.0f, -0.5f),
+    0.9f * glm::vec3(-0.5f, 2.0f, 0.5f),
+    0.9f * glm::vec3(-0.5f, 1.0f, -0.5f),
+    0.9f * glm::vec3(-0.5f, 1.0f, 0.5f),
+   0.9f *  glm::vec3(0.5f, 0.f, -0.5f),
+    0.9f * glm::vec3(0.5f, 0.f, 0.5f),
+   0.9f *  glm::vec3(0.5f, 2.0f, -0.5f),
+   0.9f *  glm::vec3(0.5f, 2.0f, 0.5f),
+    0.9f * glm::vec3(0.5f, 1.0f, -0.5f),
+    0.9f * glm::vec3(0.5f, 1.0f, 0.5f)
 };
 
 Player::Player(glm::vec3 pos, Terrain &terrain)
@@ -35,7 +35,18 @@ void Player::processInputs(InputBundle &inputs) {
     // TODO: Update the Player's velocity and acceleration based on the
     // state of the inputs.
     // first, update look direction
-    this->rotateOnRightLocal(inputs.mouseY * m_mouseSensitivity);
+
+    // clamp up and down look
+    // compute theoretical up/down angle
+
+    float pitch = glm::degrees(glm::asin(m_forward.y));
+    if (pitch + inputs.mouseY * m_mouseSensitivity > 90.f) {
+        this->rotateOnRightLocal(89.9f - pitch);
+    } else if (pitch + inputs.mouseY * m_mouseSensitivity < -90.f) {
+        this->rotateOnRightLocal(-89.9f - pitch);
+    } else {
+        this->rotateOnRightLocal(inputs.mouseY * m_mouseSensitivity);
+    }
     this->rotateOnUpGlobal(inputs.mouseX * m_mouseSensitivity);
 
     this->m_acceleration = glm::vec3(0,0,0);
@@ -62,16 +73,16 @@ void Player::processInputs(InputBundle &inputs) {
                 this->m_acceleration *= grounded ? 50.f : 15.f;
             }
             if (submerged) {
-                this->m_acceleration *= 0.66f;
+                this->m_acceleration *= 0.33f;
                 if (inputs.spacePressed) {
                     this->m_velocity.y = 3.f;
                 }
             } else {
                 if (inputs.spacePressed && grounded) {
-                    this->m_velocity.y = 7.f;
+                    this->m_velocity.y = 9.f;
                 }
             }
-            this->m_acceleration.y = submerged ? -8.f : -12.f;
+            this->m_acceleration.y = submerged ? -8.f : -25.f;
             break;
         }
         case MovementMode::FLYING:
@@ -95,7 +106,7 @@ void Player::processInputs(InputBundle &inputs) {
             }
             if (glm::length(this->m_acceleration) > 0) {
                 this->m_acceleration = glm::normalize(this->m_acceleration);
-                this->m_acceleration *= 20.f;
+                this->m_acceleration *= 30.f;
             }
     }
 }

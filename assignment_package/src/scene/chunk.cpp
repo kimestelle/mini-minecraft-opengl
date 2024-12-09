@@ -187,7 +187,6 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
     indices.push_back(vC + 0);
     indices.push_back(vC + 2);
     indices.push_back(vC + 3);
-
 }
 
 bool isTransparent(BlockType t) {
@@ -195,6 +194,13 @@ bool isTransparent(BlockType t) {
 }
 
 void Chunk::generateVBOData() {
+    std::cout << "Generating Data" << std::endl;
+
+    opq_interleavedData.clear();
+    trans_interleavedData.clear();
+    opq_indices.clear();
+    trans_indices.clear();
+
     int opq_faceCount = 0;
     int opq_vertexCount = 0;
 
@@ -215,42 +221,42 @@ void Chunk::generateVBOData() {
                     BlockType z_pos = (z < 15) ? getLocalBlockAt(x, y, z + 1) : (m_neighbors[ZPOS] ? m_neighbors[ZPOS]->getLocalBlockAt(x, y, 0) : EMPTY);
                     BlockType z_neg = (z > 0) ? getLocalBlockAt(x, y, z - 1) : (m_neighbors[ZNEG] ? m_neighbors[ZNEG]->getLocalBlockAt(x, y, 15) : EMPTY);
 
-                    if (x_pos == EMPTY || (isTransparent(x_pos) && x_pos != t)) {
+                    if (x_pos == EMPTY || ((isTransparent(x_pos) || x_pos == LAVA) && x_pos != t)) {
                         if (!isTransparent(t)) {
                             updateVBO(opq_interleavedData, XPOS, blockPos, t, opq_vertexCount, opq_indices); opq_faceCount ++; opq_vertexCount += 4;
                         } else {
                             updateVBO(trans_interleavedData, XPOS, blockPos, t, trans_vertexCount, trans_indices); trans_faceCount ++; trans_vertexCount += 4;
                         }
                     }
-                    if (x_neg == EMPTY || (isTransparent(x_neg) && x_neg != t)) {
+                    if (x_neg == EMPTY || ((isTransparent(x_neg) || x_neg == LAVA) && x_neg != t)) {
                         if (!isTransparent(t)) {
                             updateVBO(opq_interleavedData, XNEG, blockPos, t, opq_vertexCount, opq_indices); opq_faceCount ++; opq_vertexCount += 4;;
                         } else {
                             updateVBO(trans_interleavedData, XNEG, blockPos, t, trans_vertexCount, trans_indices); trans_faceCount ++; trans_vertexCount += 4;
                         }
                     }
-                    if (y_pos == EMPTY || (isTransparent(y_pos) && y_pos != t)) {
+                    if (y_pos == EMPTY || ((isTransparent(y_pos) || y_pos == LAVA) && y_pos != t)) {
                         if (!isTransparent(t)) {
                             updateVBO(opq_interleavedData, YPOS, blockPos, t, opq_vertexCount, opq_indices); opq_faceCount ++; opq_vertexCount += 4;
                         } else {
                             updateVBO(trans_interleavedData, YPOS, blockPos, t, trans_vertexCount, trans_indices); trans_faceCount ++; trans_vertexCount += 4;
                         }
                     }
-                    if (y_neg == EMPTY || (isTransparent(y_neg) && y_neg != t)) {
+                    if (y_neg == EMPTY || ((isTransparent(y_neg)|| y_neg == LAVA) && y_neg != t)) {
                         if (!isTransparent(t)) {
                             updateVBO(opq_interleavedData, YNEG, blockPos, t, opq_vertexCount, opq_indices); opq_faceCount ++; opq_vertexCount += 4;
                         } else {
                             updateVBO(trans_interleavedData, YNEG, blockPos, t, trans_vertexCount, trans_indices); trans_faceCount ++; trans_vertexCount += 4;
                         }
                     }
-                    if (z_pos == EMPTY || (isTransparent(z_pos) && z_pos != t)) {
+                    if (z_pos == EMPTY || ((isTransparent(z_pos) || z_pos == LAVA) && z_pos != t)) {
                         if (!isTransparent(t)) {
                             updateVBO(opq_interleavedData, ZPOS, blockPos, t, opq_vertexCount, opq_indices); opq_faceCount ++; opq_vertexCount += 4;
                         } else {
                             updateVBO(trans_interleavedData, ZPOS, blockPos, t, trans_vertexCount, trans_indices); trans_faceCount ++; trans_vertexCount += 4;
                         }
                     }
-                    if (z_neg == EMPTY || (isTransparent(z_neg) && z_neg != t)) {
+                    if (z_neg == EMPTY || ((isTransparent(z_neg) || z_neg == LAVA) && z_neg != t)) {
                         if (!isTransparent(t)) {
                             updateVBO(opq_interleavedData, ZNEG, blockPos, t, opq_vertexCount, opq_indices); opq_faceCount ++; opq_vertexCount += 4;
                         } else {
@@ -261,8 +267,11 @@ void Chunk::generateVBOData() {
             }
         }
     }
-        // std::cout << "debug: face count: " << faceCount << std::endl;
-        // std::cout << "debug: vertex count: " << vertexCount << std::endl;
+
+    /*
+        std::cout << "debug: face count: " << trans_faceCount << std::endl;
+        std::cout << "debug: vertex count: " << trans_vertexCount << std::endl;
+    */
 
     working = true;
 }
@@ -270,6 +279,8 @@ void Chunk::generateVBOData() {
 
 
 void Chunk::loadToGPU() {
+
+    std::cout << "Loading to GPU" << std::endl;
 
     generateBuffer(OPQ_INTERLEAVED);
     generateBuffer(OPQ_INDEX);
@@ -295,6 +306,8 @@ void Chunk::loadToGPU() {
     } else {
         indexCounts[OPQ_INTERLEAVED] = 0;
     }
+
+    std::cout << "debug: INTERLEAVED count: " << indexCounts[OPQ_INTERLEAVED] << std::endl;
 
     generateBuffer(TRANS_INTERLEAVED);
     generateBuffer(TRANS_INDEX);
@@ -327,6 +340,7 @@ void Chunk::loadToGPU() {
 
 void Chunk::createVBOdata() {
     generateVBOData();
+    // loadToGPU();
 }
 
 void Chunk::create() {
