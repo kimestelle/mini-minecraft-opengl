@@ -90,9 +90,9 @@ if (!QFile(":/textures/minecraft_textures_all.png").exists()){
 
     for(int i = -1; i <= 1; i++) {
         for(int j = -1; j <= 1; j++) {
-            // std::cout << x + i * 64 << ", " << z + j * 64 << std::endl;
+            std::cout << x + i * 64 << ", " << z + j * 64 << std::endl;
             m_terrain.GenerateTerrain(x + i * 64, z + j * 64);
-            // std::cout << "COokie" << std::endl;
+            std::cout << "COokie" << std::endl;
         }
     }
 
@@ -435,6 +435,10 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
                     if (m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z) != BEDROCK) {
                         m_terrain.setGlobalBlockAt(currPos.x, currPos.y, currPos.z, EMPTY);
                         m_terrain.getChunkAt(currPos.x, currPos.z)->createVBOdata();
+                        // m_terrain.getChunkAt(currPos.x, currPos.z)->loaded = false;
+                        // m_terrain.getChunkAt(currPos.x, currPos.z)->ready = true;
+                        // m_terrain.loadChunkVBOs();
+                        // m_terrain.loadChunkVBOs();
                     }
                     break;
                 case Qt::RightButton:

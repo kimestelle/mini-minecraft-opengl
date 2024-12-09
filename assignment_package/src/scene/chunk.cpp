@@ -187,7 +187,6 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
     indices.push_back(vC + 0);
     indices.push_back(vC + 2);
     indices.push_back(vC + 3);
-
 }
 
 bool isTransparent(BlockType t) {
@@ -195,6 +194,13 @@ bool isTransparent(BlockType t) {
 }
 
 void Chunk::generateVBOData() {
+    std::cout << "Generating Data" << std::endl;
+
+    opq_interleavedData.clear();
+    trans_interleavedData.clear();
+    opq_indices.clear();
+    trans_indices.clear();
+
     int opq_faceCount = 0;
     int opq_vertexCount = 0;
 
@@ -261,8 +267,11 @@ void Chunk::generateVBOData() {
             }
         }
     }
-        // std::cout << "debug: face count: " << faceCount << std::endl;
-        // std::cout << "debug: vertex count: " << vertexCount << std::endl;
+
+    /*
+        std::cout << "debug: face count: " << trans_faceCount << std::endl;
+        std::cout << "debug: vertex count: " << trans_vertexCount << std::endl;
+    */
 
     working = true;
 }
@@ -270,6 +279,8 @@ void Chunk::generateVBOData() {
 
 
 void Chunk::loadToGPU() {
+
+    std::cout << "Loading to GPU" << std::endl;
 
     generateBuffer(OPQ_INTERLEAVED);
     generateBuffer(OPQ_INDEX);
@@ -295,6 +306,8 @@ void Chunk::loadToGPU() {
     } else {
         indexCounts[OPQ_INTERLEAVED] = 0;
     }
+
+    std::cout << "debug: INTERLEAVED count: " << indexCounts[OPQ_INTERLEAVED] << std::endl;
 
     generateBuffer(TRANS_INTERLEAVED);
     generateBuffer(TRANS_INDEX);
@@ -327,6 +340,7 @@ void Chunk::loadToGPU() {
 
 void Chunk::createVBOdata() {
     generateVBOData();
+    // loadToGPU();
 }
 
 void Chunk::create() {
