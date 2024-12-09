@@ -38,23 +38,24 @@ void main()
         uv.x += mod(u_Time * 0.001, 1.0 / 16.0);
     }
 
+    float cosTheta = clamp(dot(fs_Nor, fs_LightVec), 0.0, 1.0);
     vec4 texColor = texture(u_Texture, uv);
-    float visibility = texture( u_ShadowMap, fs_ShadowPos.xy).z < fs_ShadowPos.z+.005f ? 0.5 : 1.0;
+    float visibility = texture( u_ShadowMap, fs_ShadowPos.xy).z < fs_ShadowPos.z-clamp(0.005*tan(acos(cosTheta)), 0, 0.01) ? 0.5 : 1.0;
 
     // Calculate the diffuse term for Lambert shading
     float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
     // Avoid negative lighting values
     diffuseTerm = clamp(diffuseTerm, 0, 1);
 
-    float ambientTerm = 0.5;
-    /*float lightIntensity = (diffuseTerm * visibility) + ambientTerm;*/
-    float lightIntensity = visibility;
+    float ambientTerm = 0.25;
+    float lightIntensity = (diffuseTerm * visibility) + ambientTerm;
+    // float lightIntensity = visibility;
     //Add a small float value to the color multiplier
     //to simulate ambient lighting. This ensures that faces that are not
     //lit by our point light are not completely black.
 
     // Compute final shaded color
-    // out_Col = vec4(texColor.rgb * lightIntensity, texColor.a);
-    // out_Col = vec4(fs_ShadowPos.xy, 0, 1);
+    out_Col = vec4(texColor.rgb * lightIntensity, texColor.a);
+    // out_Col = vec4(vec3(visibility), 1);
     // out_Col = vec4(texture(u_ShadowMap, fs_ShadowPos.xy).xyz, 1);
 }

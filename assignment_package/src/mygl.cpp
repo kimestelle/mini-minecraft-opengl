@@ -193,7 +193,7 @@ void MyGL::sendPlayerDataToGUI() const {
 // so paintGL() called at a rate of 60 frames per second.
 void MyGL::paintGL() {
     //bind to shadow mapping setup
-    glm::vec3 lightInvDir = glm::vec3(100, 258, 0);
+    glm::vec3 lightInvDir = glm::vec3(250, 258, 0);
     shadowFBO.bindFrameBuffer();
     glViewport(0, 0, 1024, 1024);
     glClearColor(1.f, 1.f, 1.f, 1.f);
@@ -206,7 +206,9 @@ void MyGL::paintGL() {
     glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * depthModelMatrix;
 
     progShadows.setUnifMat4("u_DepthMVP", depthMVP);
+    glCullFace(GL_FRONT);
     renderTerrain(progShadows);
+    glCullFace(GL_BACK);
 
     glm::mat4 biasMatrix(
         0.5, 0.0, 0.0, 0.0,
