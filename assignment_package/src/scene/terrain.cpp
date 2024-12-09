@@ -158,7 +158,7 @@ void Terrain::loadChunkVBOs() {
         }
 
         if(value->working) { ///DONE WORKING
-            std::cout << "mew" << std::endl;
+            // std::cout << "mew" << std::endl;
             value->loadToGPU();
             value->working = false;
             value->loaded = true;
@@ -343,21 +343,21 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
     for (int x = xPos; x < 16*WinChunks + xPos; x++) {
         for (int z = zPos; z < 16*WinChunks + zPos; z++) {
 
-            float max = 0;
-            float noiseVal = 0.0f;
+            // float max = 0;
+            // float noiseVal = 0.0f;
 
-            for (int i = 0; i < 4; i++) {
-                float lacunarity = glm::pow(2.0f, (float)i);
-                float persistance = glm::pow(0.6f, (float)i);
-                max += persistance;
+            // for (int i = 0; i < 4; i++) {
+            //     float lacunarity = glm::pow(2.0f, (float)i);
+            //     float persistance = glm::pow(0.6f, (float)i);
+            //     max += persistance;
 
-                noiseVal += persistance * PerlinNoise(x * 0.007 * lacunarity, 20.12 * i, z * 0.007 * lacunarity);
-            }
+            //     noiseVal += persistance * PerlinNoise(x * 0.007 * lacunarity, 20.12 * i, z * 0.007 * lacunarity);
+            // }
 
             // noiseVal /= max;
-            noiseVal -= 0.2;
-            noiseVal = glm::max(0.0f, noiseVal);
-            noiseVal *= (noiseVal * 0.8f);
+            // noiseVal -= 0.2;
+            // noiseVal = glm::max(0.0f, noiseVal);
+            // noiseVal *= (noiseVal * 0.8f);
 
 
             // noiseVal *= 40;
@@ -370,75 +370,143 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
             //     }
             // }
 
-            float typeTerrain = PerlinNoise(x * 0.004, 53.23, z * 0.004);
+            const float typeTerrain = 40 * PerlinNoise(x * 0.004, 12, z * 0.004) + 129;
+            const float terrain_perlin = PerlinNoise(x * 0.02, 12.23, z * 0.02);
 
             for(int y = 0; y < 256; y++) {
-                bool isEmpty = true;
                 if (y == 0) {
                     setGlobalBlockAt(x, y, z, BEDROCK);
-                    isEmpty = false;
                 } else if (y <= 128) {
                     float noise = PerlinNoise(0.1*x, 0.1*z, 0.1*y);
                     // I know instructions say negative but I find this produces a nice looking result
                     if (noise < 0.5) {
                         if (y<25) {
                             setGlobalBlockAt(x, y, z, LAVA);
-                            isEmpty = false;
                         } else {
                             setGlobalBlockAt(x, y, z, EMPTY);
                         }
                     } else {
                         setGlobalBlockAt(x, y, z, STONE);
-                        isEmpty = false;
                     }
                 } else if (y == 129) {
                     setGlobalBlockAt(x, y, z, STONE);
-                    isEmpty = false;
                 }
                 else {
-
-                    float temp = noiseVal;
-
-                    if(typeTerrain > 0.6f) {
-                        temp *= 40;
-                        temp += 129;
+                    if (typeTerrain <= 139) {
+                        if (y <= typeTerrain) {
+                            setGlobalBlockAt(x, y, z, DIRT);
+                        }
+                        else if (y > typeTerrain && y <= 139) {
+                            setGlobalBlockAt(x, y, z, WATER);
+                        }
                     } else {
-                        temp *= 20;
-                        temp += 129 + 20;
-                    }
+                        // split into four biomes:
+                        float terrainPercent = (typeTerrain - 139) / 30;
+                        // 0 to 1
+                        if (terrainPercent < 0.333f) {
+                            //Grasslands
+                            // std::cout << "A" << x << ", " << z << std::endl;
 
-                    // std::vector<float> noise{};
-                    if(y <= temp) {
-                        //land generation
+                            float temp = (terrainPercent - (0.333f * 0.5));
+                            if (temp < 0) {
+                                temp = -temp;
+                            }
 
-                        //Generic Land
-                        if(typeTerrain > 0.6f) {
+                            float amp = (0.333f / 2.0f) - temp;
+                            float threshold = (80 * amp * terrain_perlin) + 139;
 
-                            if(y <= 160) {
-                                if(y+1 > 145) {
+                            if (y <= threshold) {
+                                if(y + 1 > threshold) {
                                     setGlobalBlockAt(x, y, z, GRASS);
+                                    if (x % 10 == (int)(threshold) % 10 && z % 10 == (int)(threshold) % 10) {
+                                        bool ctd = true;
+                                        for(int i = -2; i < 2; i++) {
+                                            for(int j = -2; j < 2; j++) {
+                                                if (!hasChunkAt(x + i, z + j)) {
+                                                    ctd = false;
+                                                }
+                                            }
+                                        }
+
+                                        if(!ctd) {
+                                            continue;
+                                        }
+
+                                        setGlobalBlockAt(x, y+1, z, WOOD);
+                                        setGlobalBlockAt(x, y+2, z, WOOD);
+                                        setGlobalBlockAt(x, y+3, z, WOOD);
+                                        setGlobalBlockAt(x, y+4, z, WOOD);
+                                        setGlobalBlockAt(x, y+5, z, LEAVES);
+
+                                        for(int i = -2; i < 2; i++) {
+                                            for(int j = -2; j < 2; j++) {
+                                                if (i == 0  && j == 0) {
+                                                    continue;
+                                                }
+
+                                                setGlobalBlockAt(x+i, y+3, z+j, LEAVES);
+                                            }
+                                        }
+
+                                        for(int i = -1; i < 1; i++) {
+                                            for(int j = -1; j < 1; j++) {
+                                                if (i == 0  && j == 0) {
+                                                    continue;
+                                                }
+
+                                                setGlobalBlockAt(x+i, y+4, z+j, LEAVES);
+                                            }
+                                        }
+                                    }
                                 } else {
                                     setGlobalBlockAt(x, y, z, DIRT);
                                 }
                             }
-                            else {
-                                if (y < 180) {
-                                    setGlobalBlockAt(x, y, z, STONE);
-                                } else {
-                                    if(y+1 > 180) {
-                                        setGlobalBlockAt(x, y, z, SNOW);
-                                    } else {
-                                        setGlobalBlockAt(x, y, z, STONE);
+                        } else if (terrainPercent < 0.666f) {
+                            //     //Sand
+                            // std::cout << "B " << x << ", " << z << std::endl;
+                            float temp = (terrainPercent - (0.333f * 1.5));
+                            if (temp < 0) {
+                                temp = -temp;
+                            }
+
+                            float amp = (0.333f / 2.0f) - temp;
+
+                            float threshold = (80 * amp * terrain_perlin) + 139;
+
+                            if (y <= threshold) {
+                                setGlobalBlockAt(x, y, z, SAND);
+                                if(y+1 > threshold) {
+                                    if (x % 10 == (int)(threshold) % 10 && z % 10 == (int)(threshold) % 10) {
+                                        setGlobalBlockAt(x, y+1, z, CACTUS);
+                                        setGlobalBlockAt(x, y+2, z, CACTUS);
+                                        setGlobalBlockAt(x, y+3, z, CACTUS);
+                                        if (x % 10 > 4) {
+                                            setGlobalBlockAt(x, y+4, z, CACTUS);
+                                        }
                                     }
                                 }
                             }
-                            isEmpty = false;
                         } else {
-                            setGlobalBlockAt(x, y, z, SAND  );
-                            isEmpty = false;
+                            //     //Snowy Mountains
+
+                            float temp = terrainPercent - (0.333f * 2.5);
+                            if (temp < 0) {
+                                temp = -temp;
+                            }
+                            float amp = (0.333f / 2.0f) - temp;
+
+
+                            float threshold = 240 * amp * terrain_perlin + 139;
+
+                            if (y <= threshold) {
+                                if(y + 1 > threshold) {
+                                    setGlobalBlockAt(x, y, z, SNOW);
+                                } else {
+                                    setGlobalBlockAt(x, y, z, STONE);
+                                }
+                            }
                         }
-                    } else if (y <= 145) {
-                        setGlobalBlockAt(x, y, z, WATER);
                     }
                 }
             }
@@ -460,7 +528,7 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
     //     }
     // }
 
-    std::cout << "Part 3 for at " << xPos << ", " << zPos << std::endl;
+    // std::cout << "Part 3 for at " << xPos << ", " << zPos << std::endl;
 
     for(int x = xPos; x < 16*WinChunks + xPos; x += 16) {
         for(int z = zPos; z < 16*WinChunks + zPos; z += 16) {
@@ -549,45 +617,6 @@ float PerlinNoise(float x, float y, float z) {
 }
 
 
-
-
-
-float voronoiNoise(const glm::vec2& position, int seed) {
-    // Helper to generate a pseudo-random 2D point in a cell
-    auto randomPointInCell = [](const glm::ivec2& cell, int seed) -> glm::vec2 {
-        int hash = cell.x * 73856093 ^ cell.y * 19349663 ^ seed;
-        srand(hash);
-        return glm::vec2(static_cast<float>(rand()) / RAND_MAX, static_cast<float>(rand()) / RAND_MAX);
-    };
-
-    // Determine the base cell of the input position
-    glm::ivec2 baseCell = glm::floor(position);
-
-    // Track the minimum distance
-    float minDist = std::numeric_limits<float>::max();
-
-    // Iterate through neighboring cells
-    for (int y = -1; y <= 1; ++y) {
-        for (int x = -1; x <= 1; ++x) {
-            glm::ivec2 neighborCell = baseCell + glm::ivec2(x, y);
-
-            // Generate feature point in the neighbor cell
-            glm::vec2 featurePoint = randomPointInCell(neighborCell, seed) + glm::vec2(neighborCell);
-
-            // Calculate the distance from the feature point to the input position
-            float dist = glm::distance(position, featurePoint);
-
-            // Update the minimum distance
-            if (dist < minDist) {
-                minDist = dist;
-            }
-        }
-    }
-
-    // Normalize the distance to the range [0, 1]
-    float maxDist = std::sqrt(8.0f); // Maximum distance in a 2x2 grid
-    return minDist / maxDist;
-}
 
 
 

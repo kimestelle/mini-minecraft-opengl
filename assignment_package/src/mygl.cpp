@@ -76,7 +76,7 @@ void MyGL::initializeGL()
     postProcessFBO.create();
     shadowFBO.create(true);
 
-if (!QFile(":/textures/minecraft_textures_all.png").exists()){
+    if (!QFile(":/textures/minecraft_textures_all.png").exists()){
         std::cerr << "error: tex file not found" << std::endl;
     } else {
         m_texture.create(":/textures/minecraft_textures_all.png", GL_RGBA, GL_BGRA);
@@ -92,9 +92,10 @@ if (!QFile(":/textures/minecraft_textures_all.png").exists()){
         for(int j = -1; j <= 1; j++) {
             std::cout << x + i * 64 << ", " << z + j * 64 << std::endl;
             m_terrain.GenerateTerrain(x + i * 64, z + j * 64);
-            std::cout << "COokie" << std::endl;
         }
     }
+
+    m_player.move(glm::vec3(47.f, 164.f, 170.f));
 
     // We have to have a VAO bound in OpenGL 3.2 Core. But if we're not
     // using multiple VAOs, we can just bind one once.
@@ -137,15 +138,14 @@ void MyGL::tick() {
     if (dT > 0) {
         m_lastTime = currentTime;
     }
-    m_player.tick(dT, m_inputs); // Player-side tick
-
-    int x = (m_player.mcr_position.x - 32) - ((int)(m_player.mcr_position.x - 32) % 64);
-    int z = (m_player.mcr_position.z - 32) - ((int)(m_player.mcr_position.z - 32) % 64);
-
 
     auto f = [this](float x, float z) {
         m_terrain.GenerateTerrain(x, z);
     };
+
+    int x = (m_player.mcr_position.x - 32) - ((int)(m_player.mcr_position.x - 32) % 64);
+    int z = (m_player.mcr_position.z - 32) - ((int)(m_player.mcr_position.z - 32) % 64);
+
 
     std::vector<std::thread> blockTypeWorkers = {};
 
@@ -161,11 +161,15 @@ void MyGL::tick() {
         }
     }
 
+
     m_terrain.loadChunkVBOs();
 
     for(auto &x : blockTypeWorkers) {
         x.detach();
     }
+
+
+    m_player.tick(dT, m_inputs); // Player-side tick
 
     m_inputs.mouseX = 0;
     m_inputs.mouseY = 0;

@@ -111,6 +111,11 @@ void Player::processInputs(InputBundle &inputs) {
     }
 }
 
+void Player::move(glm::vec3 pos) {
+    this->m_position = pos;
+}
+
+
 void Player::computePhysics(float dT, Terrain &terrain) {
     // TODO: Update the Player's position based on its acceleration
     // and velocity, and also perform collision detection.

@@ -95,7 +95,31 @@ std::unordered_map<BlockType, std::unordered_map<Direction, glm::vec2>> blockUVM
             {YNEG, glm::vec2(0, 4)},
             {ZPOS, glm::vec2(0, 4)},
             {ZNEG, glm::vec2(0, 4)},
-            }}
+            }},
+    {WOOD, {
+            {XPOS, glm::vec2(4, 14)},
+            {XNEG, glm::vec2(4, 14)},
+            {YPOS, glm::vec2(5, 14)},
+            {YNEG, glm::vec2(5, 14)},
+            {ZPOS, glm::vec2(4, 14)},
+            {ZNEG, glm::vec2(4, 14)},
+            }},
+    {LEAVES, {
+            {XPOS, glm::vec2(4, 12)},
+            {XNEG, glm::vec2(4, 12)},
+            {YPOS, glm::vec2(4, 12)},
+            {YNEG, glm::vec2(4, 12)},
+            {ZPOS, glm::vec2(4, 12)},
+            {ZNEG, glm::vec2(4, 12)},
+            }},
+    {CACTUS, {
+              {XPOS, glm::vec2(6, 11)},
+              {XNEG, glm::vec2(6, 11)},
+              {YPOS, glm::vec2(5, 11)},
+              {YNEG, glm::vec2(5, 11)},
+              {ZPOS, glm::vec2(6, 11)},
+              {ZNEG, glm::vec2(6, 11)},
+              }}
 };
 
 
@@ -202,7 +226,7 @@ void Chunk::updateVBO(std::vector<glm::vec4>& interleavedData, Direction dir, co
 }
 
 bool isTransparent(BlockType t) {
-    return t == WATER;
+    return t == WATER || t == CACTUS ;
 }
 
 void Chunk::generateVBOData() {
@@ -292,7 +316,7 @@ void Chunk::generateVBOData() {
 
 void Chunk::loadToGPU() {
 
-    std::cout << "Loading to GPU" << std::endl;
+    // std::cout << "Loading to GPU" << std::endl;
 
     generateBuffer(OPQ_INTERLEAVED);
     generateBuffer(OPQ_INDEX);
@@ -319,7 +343,7 @@ void Chunk::loadToGPU() {
         indexCounts[OPQ_INTERLEAVED] = 0;
     }
 
-    std::cout << "debug: INTERLEAVED count: " << indexCounts[OPQ_INTERLEAVED] << std::endl;
+    // std::cout << "debug: INTERLEAVED count: " << indexCounts[OPQ_INTERLEAVED] << std::endl;
 
     generateBuffer(TRANS_INTERLEAVED);
     generateBuffer(TRANS_INDEX);
