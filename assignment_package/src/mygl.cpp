@@ -11,8 +11,9 @@
 MyGL::MyGL(QWidget *parent)
     : OpenGLContext(parent),
       m_worldAxes(this),
-      m_progLambert(this), m_progFlat(this), m_progInstanced(this), m_texture(this),
+    m_progLambert(this), m_progFlat(this), m_progSky(this), m_progInstanced(this), m_texture(this),
       m_terrain(this), m_player(glm::vec3(48.f, 129.f, 48.f), m_terrain),
+    m_quad(this),
     m_inputs(), m_timer(), m_time(0.f), m_lastTime(QDateTime::currentMSecsSinceEpoch())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
@@ -63,6 +64,8 @@ void MyGL::initializeGL()
     m_progFlat.create(":/glsl/flat.vert.glsl", ":/glsl/flat.frag.glsl");
     // m_progInstanced.create(":/glsl/instanced.vert.glsl", ":/glsl/lambert.frag.glsl");
 
+    m_progSky.create(":/glsl/sky.vert.glsl", ":/glsl/sky.frag.glsl");
+
 
 if (!QFile(":/textures/minecraft_textures_all.png").exists()){
         std::cerr << "error: tex file not found" << std::endl;
@@ -85,6 +88,13 @@ if (!QFile(":/textures/minecraft_textures_all.png").exists()){
             terrainBlock++;
         }
     }
+    //create sky quad
+    m_quad.create();
+
+    // glBindVertexArray(0);
+    // glBindBuffer(GL_ARRAY_BUFFER, 0);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 }
 
 
@@ -99,6 +109,11 @@ void MyGL::resizeGL(int w, int h) {
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
+
+    //position sky
+    glm::mat4 viewProjInv = glm::inverse(viewproj);
+    m_progSky.setUnifMat4("u_ViewProjInv", viewProjInv);
+    m_progSky.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
 
     printGLErrorLog();
 }
@@ -143,13 +158,25 @@ void MyGL::sendPlayerDataToGUI() const {
 void MyGL::paintGL() {
     // Clear the screen so that we only see newly drawn images
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glm::mat4 viewproj = m_player.mcr_camera.getViewProj();
+
+    glDisable(GL_CULL_FACE);
+    // glDisable(GL_DEPTH_TEST);
+
+    m_progSky.useMe();
+    glm::mat4 viewProjInv = glm::inverse(viewproj);
+    m_progSky.setUnifMat4("u_ViewProjInv", viewProjInv);
+    m_progSky.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
+    m_progSky.drawSky(m_quad);
+    m_progSky.setUnifFloat("u_Time", m_time);
+
+    // glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
-
-    glm::mat4 viewproj = m_player.mcr_camera.getViewProj();
     m_progLambert.setUnifMat4("u_ViewProj", viewproj);
     m_progLambert.setUnifMat4("u_Model", glm::mat4());
     m_progLambert.setUnifMat4("u_ModelInvTr", glm::mat4());
+    m_progLambert.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
 
@@ -157,11 +184,6 @@ void MyGL::paintGL() {
 
     m_texture.bind(0);
     renderTerrain();
-
-    glDisable(GL_DEPTH_TEST);
-    m_progFlat.setUnifMat4("u_Model", glm::mat4());
-    m_progFlat.drawOpq(m_worldAxes);
-    glEnable(GL_DEPTH_TEST);
 }
 
 // TODO: Change this so it renders the nine zones of generated

@@ -51,6 +51,7 @@ public:
 
     //new draw function for interleaved VBOs
     void drawInterleaved(Drawable &d);
+    void drawSky(Drawable &sky);
     void drawOpq(Drawable &d);
     void drawTrans(Drawable &d);
     // Utility function used in create()
