@@ -445,20 +445,20 @@ void MyGL::mousePressEvent(QMouseEvent *e) {
         float nextX = ray.x >= 0 ? std::ceil(currPos.x + 0.01f) : std::floor(currPos.x-0.01f);
         float nextY = ray.y >= 0 ? std::ceil(currPos.y + 0.01f) : std::floor(currPos.y-0.01f);
         float nextZ = ray.z >= 0 ? std::ceil(currPos.z + 0.01f) : std::floor(currPos.z-0.01f);
-        float xDist = (nextX - currPos.x) / ray.x;
-        float yDist = (nextY - currPos.y) / ray.y;
-        float zDist = (nextZ - currPos.z) / ray.z;
+        float xDist = std::abs(ray.x) > 0.0001f ? (nextX - currPos.x) / ray.x : FLT_MAX;
+        float yDist = std::abs(ray.y) > 0.0001f ? (nextY - currPos.y) / ray.y : FLT_MAX;
+        float zDist = std::abs(ray.z) > 0.0001f ? (nextZ - currPos.z) / ray.z : FLT_MAX;
         float minDist = std::min(xDist, std::min(yDist, zDist));
         currPos += minDist * ray;
         if (xDist == minDist) {
-            currPos.x = glm::round(currPos.x);
-            currPos.x = ray.x >= 0 ? currPos.x + 0.01f : currPos.x - 0.01f;
+            currPos.x = nextX;
+            currPos.x += ray.x >= 0 ? 0.01f : -0.01f;
         } else if (yDist == minDist) {
-            currPos.y = glm::round(currPos.y);
-            currPos.y = ray.y >= 0 ? currPos.y + 0.01f : currPos.y - 0.01f;
+            currPos.y = nextY;
+            currPos.y += ray.y >= 0 ? 0.01f : -0.01f;
         } else {
-            currPos.z = glm::round(currPos.z);
-            currPos.z = ray.z >= 0 ? currPos.z + 0.01f : currPos.z - 0.01f;
+            currPos.z = nextZ;
+            currPos.z += ray.z >= 0 ? 0.01f : -0.01f;
         }
         if (m_terrain.hasChunkAt(currPos.x, currPos.z)){
             BlockType block = m_terrain.getGlobalBlockAt(currPos.x, currPos.y, currPos.z);

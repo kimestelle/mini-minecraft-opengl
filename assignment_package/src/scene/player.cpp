@@ -135,9 +135,9 @@ void Player::computePhysics(float dT, Terrain &terrain) {
                 // differing logic for front/back
                 int nextX;
                 if (corners[i].x > 0) {
-                    nextX = dist.x >= 0 ? glm::ceil(corner.x-0.01) : glm::floor(corner.x-0.01);
+                    nextX = dist.x >= 0 ? glm::ceil(corner.x-0.05) : glm::floor(corner.x-0.01);
                 } else {
-                    nextX = dist.x >= 0 ? glm::ceil(corner.x+0.01) : glm::floor(corner.x+0.01);
+                    nextX = dist.x >= 0 ? glm::ceil(corner.x+0.01) : glm::floor(corner.x+0.05);
                 }
                 while (glm::abs(nextX - corner.x) <= glm::abs(dist.x)) {
                     int xCoord = dist.x >= 0 ? nextX : nextX-1;
@@ -154,9 +154,9 @@ void Player::computePhysics(float dT, Terrain &terrain) {
                 // differing logic for left/right
                 int nextZ;
                 if (corners[i].z > 0) {
-                    nextZ = dist.z >= 0 ? glm::ceil(corner.z-0.01) : glm::floor(corner.z-0.01);
+                    nextZ = dist.z >= 0 ? glm::ceil(corner.z-0.05) : glm::floor(corner.z-0.01);
                 } else {
-                    nextZ = dist.z >= 0 ? glm::ceil(corner.z+0.01) : glm::floor(corner.z+0.01);
+                    nextZ = dist.z >= 0 ? glm::ceil(corner.z+0.01) : glm::floor(corner.z+0.05);
                 }
                 while (glm::abs(nextZ - corner.z) <= glm::abs(dist.z)) {
                     int zCoord = dist.z >= 0 ? nextZ : nextZ-1;
@@ -173,9 +173,9 @@ void Player::computePhysics(float dT, Terrain &terrain) {
                 // differing logic for up/down
                 int nextY;
                 if (corners[i].y > 1) {
-                    nextY = dist.y >= 0 ? glm::ceil(corner.y-0.01) : glm::floor(corner.y-0.01);
+                    nextY = dist.y >= 0 ? glm::ceil(corner.y-0.05) : glm::floor(corner.y-0.01);
                 } else {
-                    nextY = dist.y >= 0 ? glm::ceil(corner.y+0.01) : glm::floor(corner.y+0.01);
+                    nextY = dist.y >= 0 ? glm::ceil(corner.y+0.01) : glm::floor(corner.y+0.05);
                 }
                 while (glm::abs(nextY - corner.y) <= glm::abs(dist.y)) {
                     int yCoord = dist.y >= 0 ? nextY : nextY-1;
