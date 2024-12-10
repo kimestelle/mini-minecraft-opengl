@@ -1,7 +1,7 @@
 **For milestone 3, Estelle implemented a custom sky and fluid surface waves, Saahil implemented additional biomes and procedurally placed assets, and Jesse completed shadows and underater distortion post-processing.**
 
 ## Estelle
-I implemented sky graphics + day-night cycle with randomly generated stars and animated sun (some parts of example shader including color palette and algorithms but I made most on my own)
+I implemented sky graphics + day-night cycle with stars and animated sun (some parts of example shader including color palette and algorithms but I made most on my own). applied worley noise FBM to the sky to generate clouds and pixelated the sky for the minecraft vibe.
 - Also implemented water waves inside the lambert vertex shader (positions and normals) using sine/cosine waves and blinn-phong highlights to accent the wave movements.
 
 ## Saahil
