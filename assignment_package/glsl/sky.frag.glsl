@@ -28,7 +28,7 @@ const vec3 dusk[5] = vec3[](vec3(144, 96, 144) / 255.0,
 const vec3 sunrise[3] = vec3[](vec3(1.0, 0.8, 0.6), vec3(1.0, 0.6, 0.4), vec3(1.0, 0.4, 0.2));
 const vec3 morning[3] = vec3[](vec3(0.6, 0.7, 0.8), vec3(0.75, 0.8, 0.85), vec3(0.8, 0.85, 0.9));
 const vec3 noon[3] = vec3[](vec3(0.6, 0.8, 1.0), vec3(0.7, 0.9, 1.0), vec3(0.75, 0.95, 1.0));
-const vec3 night[3] = vec3[](vec3(0.02, 0.02, 0.1), vec3(0.05, 0.05, 0.2), vec3(0.1, 0.1, 0.3));
+const vec3 night[3] = vec3[](vec3(0.02, 0.02, 0.2), vec3(0.05, 0.05, 0.2), vec3(0.1, 0.1, 0.3));
 
 const vec3 sunColor = vec3(1.0, 1.0, 0.9); // sun color
 const vec3 cloudColor = sunset[3];
@@ -83,24 +83,22 @@ vec3 uvToDusk(vec2 uv) {
 }
 
 vec3 interpolateSkyColor(float time, vec3 rayDir) {
-    if (time < 0.05) {
-        return uvToSunset(sphereToUV(rayDir));
-    } else if (time < 0.1) {
-        return mix(uvToSunset(sphereToUV(rayDir)), morning[0], smoothstep(0.05, 0.1, time));
-    } else if (time < 0.4) {
-        return morning[0];
-    } else if (time < 0.5) {
-        return mix(morning[0], noon[0], smoothstep(0.4, 0.5, time));
-    } else if (time < 0.6) {
-        return noon[0];
-    } else if (time < 0.7) {
-        return mix(noon[0], sunset[0], smoothstep(0.6, 0.7, time));
-    } else if (time < 0.8) {
-        return uvToSunset(sphereToUV(rayDir));
-    } else if (time < 0.9) {
+    if (time < 0.03) {
         return uvToDusk(sphereToUV(rayDir));
-    } else if (time < 0.95) {
-        return mix(uvToDusk(sphereToUV(rayDir)), night[0], smoothstep(0.9, 0.95, time));
+    } else if (time < 0.07) {
+        return mix(uvToDusk(sphereToUV(rayDir)), morning[0], smoothstep(0.03, 0.07, time));
+    } else if (time < 0.25) {
+        return mix(morning[0], noon[0], smoothstep(0.07, 0.25, time));
+    } else if (time < 0.35) {
+        return noon[0];
+    } else if (time < 0.45) {
+        return mix(noon[0], uvToSunset(sphereToUV(rayDir)), smoothstep(0.35, 0.45, time));
+    } else if (time < 0.55) {
+        return uvToSunset(sphereToUV(rayDir));
+    } else if (time < 0.60) {
+        return mix(uvToSunset(sphereToUV(rayDir)), night[0], smoothstep(0.55, 0.60, time));
+    } else if (time > 0.98 || time < 0.03) {
+        return mix(night[0], uvToDusk(sphereToUV(rayDir)), smoothstep(0.0, 0.03, time));
     } else {
         return night[0];
     }
@@ -108,34 +106,36 @@ vec3 interpolateSkyColor(float time, vec3 rayDir) {
 
 // sun color based on time
 vec3 sunColorBasedOnTime(float time) {
-    if (time < 0.1) {
-        return mix(sunColor, vec3(1.0, 0.6, 0.4), smoothstep(0.0, 0.05, time)); // Sunrise
+    if (time < 0.05) {
+        return mix(sunColor, vec3(1.0, 0.6, 0.4), smoothstep(0.0, 0.1, time)); // Sunrise
     } else if (time < 0.2) {
-        return mix(sunColor, vec3(1.0, 1.0, 0.9), smoothstep(0.05, 0.1, time)); // Morning
+        return mix(vec3(1.0, 0.6, 0.4), vec3(1.0, 1.0, 0.9), smoothstep(0.1, 0.2, time)); // Morning
     } else if (time < 0.55) {
-        return mix(sunColor, vec3(1.0, 1.0, 0.9), smoothstep(0.1, 0.5, time)); // Noon
-    } else if (time < 0.60) {
-        return mix(sunColor, vec3(1.0, 0.4, 0.3), smoothstep(0.5, 0.6, time)); // Sunset
+        return mix(vec3(1.0, 1.0, 0.9), vec3(1.0, 1.0, 0.9), smoothstep(0.2, 0.55, time)); // Noon
+    } else if (time < 0.65) {
+        return mix(vec3(1.0, 1.0, 0.9), vec3(1.0, 0.4, 0.3), smoothstep(0.55, 0.6, time)); // Sunset
     } else {
-        return vec3(0.0, 0.0, 0.0); // Night
+        return vec3(0.02, 0.02, 0.2); // Night
     }
 }
 
 // sun effect that expands as it nears the horizon
 vec3 sunEffect(vec3 rayDir, vec3 sunDir, vec3 sunBaseColor) {
-    float sunSize = 0.15;
+    float sunSize = 0.1;
     float outerGlowSize = 0.3;
 
     // calculate angle between ray direction and sun direction
     float angle = acos(dot(rayDir, sunDir));
     // increase sun size as it nears the horizon
     float sizeFactor = smoothstep(PI * 0.25, PI * 0.5, angle);
-    sunSize = mix(0.15, 0.3, sizeFactor); // increase size from 0.15 to 0.3
+    sunSize = mix(0.07, 0.5, sizeFactor); //grow
 
     // intensity + sun corona
     float sunIntensity = exp(-pow(length(rayDir - sunDir) / sunSize, 2.0));
-    float glowIntensity = exp(-pow(length(rayDir - sunDir) / outerGlowSize, 2.0)) * sizeFactor;
+    float glowIntensity = exp(-pow(length(rayDir - sunDir) / outerGlowSize, 4.0)) * sizeFactor;
     vec3 outerGlowColor = mix(sunBaseColor, vec3(1.0, 0.8, 0.6), 0.3); // slightly yellowish glow
+
+    sunIntensity = smoothstep(0.0, 0.15, sunIntensity);
 
     return sunIntensity * sunBaseColor + glowIntensity * outerGlowColor;
 }
@@ -169,14 +169,17 @@ void main() {
     vec3 rayDir = rayDirection(vec4(fs_Pos.xy, 1.0, 1.0));
 
     // wraparound time for animation (cycle day-night)
-    float dayTime = mod(u_Time / 1200.0, 1.0); // Full day-night cycle
+    float dayTime = mod(u_Time / 2400.0, 1.0); // Full day-night cycle
 
     // sn position based on time
-    float sunAzimuth = dayTime * TWO_PI;  // Full 360-degree rotation
-    float sunElevation = sin(dayTime * PI); // Sinusoidal motion from -PI/2 to +PI/2
-    vec3 sunDir = vec3(cos(sunElevation) * cos(sunAzimuth),
+    // float sunAzimuth = dayTime * TWO_PI;
+    float sunElevation = dayTime * TWO_PI;
+    // vec3 sunDir = vec3(cos(sunElevation) * cos(sunAzimuth),
+    //                    sin(sunElevation),
+    //                    cos(sunElevation) * sin(sunAzimuth));
+    vec3 sunDir = vec3(0.0,
                        sin(sunElevation),
-                       cos(sunElevation) * sin(sunAzimuth));
+                       cos(sunElevation));
 
     // sky color based on time
     vec3 skyColor = interpolateSkyColor(dayTime, rayDir);
@@ -190,7 +193,7 @@ void main() {
     float angle = acos(dot(rayDir, sunDir)) * 180.0 / PI;
 
     // glow
-    float sunSize = 7.5;
+    float sunSize = 5;
     if (angle < sunSize) {
         if (angle < 7.5) {
             sun = sunColor; //yellow
