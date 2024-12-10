@@ -21,7 +21,7 @@ MyGL::MyGL(QWidget *parent)
       postProcessFBO(this, width(), height(), this->devicePixelRatio()),
       quadDrawable(this),
       progShadows(this),
-      shadowFBO(this, 2048/this->devicePixelRatio(), 2048/this->devicePixelRatio(), this->devicePixelRatio())
+      shadowFBO(this, 4096/this->devicePixelRatio(), 4096/this->devicePixelRatio(), this->devicePixelRatio())
 {
     // Connect the timer to a function so that when the timer ticks the function is executed
     connect(&m_timer, SIGNAL(timeout()), this, SLOT(tick()));
@@ -129,7 +129,7 @@ void MyGL::resizeGL(int w, int h) {
     postProcessFBO.destroy();
     postProcessFBO.create();
 
-    shadowFBO.resize(2048/this->devicePixelRatio(), 2048/this->devicePixelRatio(), this->devicePixelRatio());
+    shadowFBO.resize(4096/this->devicePixelRatio(), 4096/this->devicePixelRatio(), this->devicePixelRatio());
     shadowFBO.destroy();
     shadowFBO.create();
     //position sky
@@ -213,13 +213,13 @@ void MyGL::paintGL() {
     //bind to shadow mapping setup
     glm::vec3 lightInvDir = glm::vec3(150, 100, 0);
     shadowFBO.bindFrameBuffer();
-    glViewport(0, 0, 2048, 2048);
+    glViewport(0, 0, 4096, 4096);
     glClearColor(1.f, 1.f, 1.f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
-    glm::mat4 depthProjectionMatrix = glm::ortho<float>(-20,20,-20,20, 2, 300);
-    glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir + glm::vec3(47.f, 135.f, 170.f), glm::vec3(47.f, 135.f, 170.f), glm::normalize(glm::cross(lightInvDir, glm::vec3(0, 0, -1))));
+    glm::mat4 depthProjectionMatrix = glm::ortho<float>(-100,100,-100,100, 2, 300);
+    glm::mat4 depthViewMatrix = glm::lookAt(lightInvDir + glm::vec3(m_player.mcr_position.x, 150, m_player.mcr_position.z), glm::vec3(m_player.mcr_position.x, 150, m_player.mcr_position.z), glm::normalize(glm::cross(lightInvDir, glm::vec3(0, 0, -1))));
     glm::mat4 depthModelMatrix = glm::mat4(1.0);
     glm::mat4 depthMVP = depthProjectionMatrix * depthViewMatrix * depthModelMatrix;
 
@@ -270,6 +270,7 @@ void MyGL::paintGL() {
     m_progLambert.setUnifMat4("u_Model", glm::mat4());
     m_progLambert.setUnifMat4("u_ModelInvTr", glm::mat4());
     m_progLambert.setUnifVec3("u_CameraPos", m_player.mcr_camera.mcr_position);
+    m_progLambert.setUnifVec3("lightDir", glm::normalize(lightInvDir));
     m_progFlat.setUnifMat4("u_ViewProj", viewproj);
     m_progInstanced.setUnifMat4("u_ViewProj", viewproj);
 

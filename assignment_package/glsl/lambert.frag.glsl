@@ -59,9 +59,12 @@ void main()
         return;
     }
 
-    float cosTheta = clamp(dot(fs_Nor, fs_LightVec), 0.0, 1.0);
+    float cosTheta = clamp(dot(fs_Nor, normalize(fs_LightVec)), 0.0, 1.0);
     vec4 texColor = texture(u_Texture, uv);
-    float visibility = texture( u_ShadowMap, fs_ShadowPos.xy).z < fs_ShadowPos.z-clamp(0.002*tan(acos(cosTheta)), 0, 0.01)? 0.5 : 1.0;
+
+    float ambientBias = 0.001f;
+
+    float visibility = texture( u_ShadowMap, fs_ShadowPos.xy).z < fs_ShadowPos.z-clamp(0.002*tan(acos(cosTheta)) + ambientBias, 0, 0.01)? 0.5 : 1.0;
 
     // Calculate the diffuse term for Lambert shading
     float diffuseTerm = dot(normalize(fs_Nor), normalize(fs_LightVec));
