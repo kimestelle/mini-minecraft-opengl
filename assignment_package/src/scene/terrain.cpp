@@ -348,9 +348,9 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                                             if (noise(x, z) > 0.97f) {
 
                                                 bool ctd = true;
-                                                for(int i = -2; i <= 2; i++) {
-                                                    for(int j = -2; j <= 2; j++) {
-                                                        if (!hasChunkAt(x + i, z + j) || noise(x+i, z+j) > 0.99f) {
+                                                for(int i = -3; i <= 3; i++) {
+                                                    for(int j = -3; j <= 3; j++) {
+                                                        if ((x + i) % 16 == 0 || (z + j) % 16 == 0 || noise(x+i, z+j) > 0.99f) {
                                                             ctd = false;
                                                         }
                                                     }
@@ -413,9 +413,9 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                                         if (dist > 0.1) {
                                             if (noise(x, z) > 0.97f) {
                                                 bool ctd = true;
-                                                for(int i = -2; i <= 2; i++) {
-                                                    for(int j = -2; j <= 2; j++) {
-                                                        if (!hasChunkAt(x + i, z + j) || noise(x+i, z+j) > 0.97f) {
+                                                for(int i = -3; i <= 3; i++) {
+                                                    for(int j = -3; j <= 3; j++) {
+                                                        if ((x + i) % 16 == 0 || (z + j) % 16 == 0 || noise(x+i, z+j) > 0.99f) {
                                                             ctd = false;
                                                         }
                                                     }
@@ -433,6 +433,16 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                                                     setGlobalBlockAt(x, y+5, z, WOOD);
                                                     setGlobalBlockAt(x, y+6, z, WOOD);
                                                     setGlobalBlockAt(x, y+7, z, LEAVES);
+
+                                                    for(int i = -2; i <= 2; i++) {
+                                                        for(int j = -2; j <= 2; j++) {
+                                                            if (i == 0  && j == 0) {
+                                                                continue;
+                                                            }
+
+                                                            setGlobalBlockAt(x+i, y+4, z+j, LEAVES);
+                                                        }
+                                                    }
 
                                                     for(int i = -1; i <= 1; i++) {
                                                         for(int j = -1; j <= 1; j++) {
