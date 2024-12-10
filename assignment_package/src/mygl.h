@@ -78,7 +78,7 @@ public:
 
     // Called from paintGL().
     // Calls Terrain::draw().
-    void renderTerrain(ShaderProgram &shader);
+    void renderTerrain(ShaderProgram &shader, bool opq = true, bool trans = true);
 
 protected:
     // Automatically invoked when the user
