@@ -194,8 +194,9 @@ Chunk* Terrain::instantiateChunkAt(int x, int z) {
 
 // TODO: When you make Chunk inherit from Drawable, change this code so
 // it draws each Chunk with the given ShaderProgram
-void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram) {
+void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram, bool opq, bool trans) {
 
+    if (opq) {
         for(int x = minX; x < maxX; x += 16) {
             for(int z = minZ; z < maxZ; z += 16) {
                 if (hasChunkAt(x, z)) {
@@ -206,7 +207,8 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
                 }
             }
         }
-
+    }
+    if (trans) {
         for(int x = minX; x < maxX; x += 16) {
             for(int z = minZ; z < maxZ; z += 16) {
                 if (hasChunkAt(x, z)) {
@@ -217,6 +219,7 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
                 }
             }
         }
+    }
 }
 
 

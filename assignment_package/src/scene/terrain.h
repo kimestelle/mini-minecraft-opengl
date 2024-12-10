@@ -80,7 +80,7 @@ public:
     // Draws every Chunk that falls within the bounding box
     // described by the min and max coords, using the provided
     // ShaderProgram
-    void draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram);
+    void draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shaderProgram, bool opq = true, bool trans = true);
     void loadChunkVBOs();
 
     // Initializes the Chunks that store the 64 x 256 x 64 block scene you

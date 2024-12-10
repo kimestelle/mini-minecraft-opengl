@@ -226,7 +226,7 @@ void MyGL::paintGL() {
     progShadows.setUnifMat4("u_DepthMVP", depthMVP);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
-    renderTerrain(progShadows);
+    renderTerrain(progShadows, true, false);
     glDisable(GL_CULL_FACE);
 
     glm::mat4 biasMatrix(
@@ -325,7 +325,7 @@ void MyGL::paintGL() {
 // TODO: Change this so it renders the nine zones of generated
 // terrain that surround the player (refer to Terrain::m_generatedTerrain
 // for more info)
-void MyGL::renderTerrain(ShaderProgram &prog) {
+void MyGL::renderTerrain(ShaderProgram &prog, bool opq, bool trans) {
     int x = m_player.mcr_position.x;
     int z = m_player.mcr_position.z;
 
@@ -338,7 +338,7 @@ void MyGL::renderTerrain(ShaderProgram &prog) {
     //     }
     // }
 
-    m_terrain.draw( x - 64, x + 64, z-64, z+64, &prog);
+    m_terrain.draw( x - 64, x + 64, z-64, z+64, &prog, opq, trans);
 
 }
 
