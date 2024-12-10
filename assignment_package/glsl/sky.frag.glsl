@@ -33,6 +33,14 @@ const vec3 night[3] = vec3[](vec3(0.02, 0.02, 0.2), vec3(0.05, 0.05, 0.2), vec3(
 const vec3 sunColor = vec3(1.0, 1.0, 0.9); // sun color
 const vec3 cloudColor = sunset[3];
 
+//cool pixel effect
+vec2 pixelizeUV(vec2 uv, float pixelSize) {
+    uv *= pixelSize; //shrink uvs to box size
+    uv = floor(uv); //remove fractional parts
+    uv /= pixelSize; //scale back up
+    return uv;
+}
+
 // convert spherical coordinates to uv coordinates in sky dome
 vec2 sphereToUV(vec3 p) {
     float phi = atan(p.z, p.x);
@@ -82,26 +90,42 @@ vec3 uvToDusk(vec2 uv) {
     return dusk[4];
 }
 
+float random(vec2 st) {
+    return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
 vec3 interpolateSkyColor(float time, vec3 rayDir) {
+    vec2 uv = sphereToUV(rayDir);
+    uv = pixelizeUV(uv, 700);
+
+    vec3 baseColor;
     if (time < 0.03) {
-        return uvToDusk(sphereToUV(rayDir));
+        baseColor = uvToDusk(uv);
     } else if (time < 0.07) {
-        return mix(uvToDusk(sphereToUV(rayDir)), morning[0], smoothstep(0.03, 0.07, time));
+        baseColor = mix(uvToDusk(uv), morning[0], smoothstep(0.03, 0.07, time));
     } else if (time < 0.25) {
-        return mix(morning[0], noon[0], smoothstep(0.07, 0.25, time));
+        baseColor = mix(morning[0], noon[0], smoothstep(0.07, 0.25, time));
     } else if (time < 0.35) {
-        return noon[0];
+        baseColor = noon[0];
     } else if (time < 0.45) {
-        return mix(noon[0], uvToSunset(sphereToUV(rayDir)), smoothstep(0.35, 0.45, time));
+        baseColor = mix(noon[0], uvToSunset(uv), smoothstep(0.35, 0.45, time));
     } else if (time < 0.55) {
-        return uvToSunset(sphereToUV(rayDir));
+        baseColor = uvToSunset(uv);
     } else if (time < 0.60) {
-        return mix(uvToSunset(sphereToUV(rayDir)), night[0], smoothstep(0.55, 0.60, time));
+        baseColor = mix(uvToSunset(uv), night[0], smoothstep(0.55, 0.60, time));
     } else if (time > 0.98 || time < 0.03) {
-        return mix(night[0], uvToDusk(sphereToUV(rayDir)), smoothstep(0.0, 0.03, time));
+        baseColor = mix(night[0], uvToDusk(uv), smoothstep(0.0, 0.03, time));
     } else {
-        return night[0];
+        baseColor = night[0];
     }
+
+    // random white opacity
+    float opacityFactor = random(uv);
+    float fadeFactor = 1.0 - uv.y; //fade as y increases
+    fadeFactor = clamp(fadeFactor, 0.0, 1.0);
+    vec3 white = vec3(1.0, 1.0, 1.0);
+    return mix(baseColor, white, opacityFactor * fadeFactor * 0.2);
+
 }
 
 // sun color based on time
@@ -188,7 +212,7 @@ void main() {
     vec3 currentSunColor = sunColorBasedOnTime(dayTime);
     // sun's effect on the scene
     vec3 sun = sunEffect(rayDir, sunDir, currentSunColor);
-
+\
     // sun angle
     float angle = acos(dot(rayDir, sunDir)) * 180.0 / PI;
 
