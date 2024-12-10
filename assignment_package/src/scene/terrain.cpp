@@ -226,6 +226,7 @@ void Terrain::draw(int minX, int maxX, int minZ, int maxZ, ShaderProgram *shader
 float PerlinNoise(float x, float y, float z);
 float voronoiNoise(const glm::vec2& position, int seed);
 float noise(int x, int y) ;
+float distanceToVoronoiEdge(float x, float y, int seed);
 
 
 void Terrain::GenerateTerrain(int xPos, int zPos)  {
@@ -266,6 +267,7 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
 
             const float typeTerrain = 40 * PerlinNoise(x * 0.003, 12, z * 0.003) + 129;
             const float terrain_perlin = PerlinNoise(x * 0.02, 12.23, z * 0.02);
+            const float dist = distanceToVoronoiEdge(x * 0.02, z * 0.02, 43);
 
             for(int y = 0; y < 256; y++) {
                 if (y == 0) {
@@ -286,170 +288,180 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                     setGlobalBlockAt(x, y, z, STONE);
                 }
                 else {
-                    if (typeTerrain <= 139) {
-                        if (y <= typeTerrain) {
-                            setGlobalBlockAt(x, y, z, DIRT);
-                        }
-                        else if (y > typeTerrain && y <= 139) {
-                            setGlobalBlockAt(x, y, z, WATER);
-                        }
-                    } else {
-                        // split into four biomes:
-                        float terrainPercent = (typeTerrain - 139) / 30;
-                        // 0 to 1
-                        if (terrainPercent < 0.333f) {
-                            //Grasslands
-                            // std::cout << "A" << x << ", " << z << std::endl;
-
-                            float temp = (terrainPercent - (0.333f * 0.5));
-                            if (temp < 0) {
-                                temp = -temp;
+                        if (typeTerrain <= 139) {
+                            if (y <= typeTerrain) {
+                                setGlobalBlockAt(x, y, z, DIRT);
                             }
-
-                            float amp = (0.333f / 2.0f) - temp;
-
-                            float threshold = (80 * amp * terrain_perlin) + 139;
-
-                            if (y <= threshold) {
-                                setGlobalBlockAt(x, y, z, SAND);
-                                if(y+1 > threshold) {
-                                    if (x % 10 == (int)(threshold) % 10 && z % 10 == (int)(threshold) % 10) {
-                                        setGlobalBlockAt(x, y+1, z, CACTUS);
-                                        setGlobalBlockAt(x, y+2, z, CACTUS);
-                                        setGlobalBlockAt(x, y+3, z, CACTUS);
-                                        if (x % 10 > 4) {
-                                            setGlobalBlockAt(x, y+4, z, CACTUS);
-                                        }
-                                    }
-                                }
+                            else if (y > typeTerrain && y <= 139) {
+                                setGlobalBlockAt(x, y, z, WATER);
                             }
-                        } else if (terrainPercent < 0.666f) {
-                            //     //Grass
-                            // std::cout << "B " << x << ", " << z << std::endl;
-                            float temp = (terrainPercent - (0.333f * 1.5));
-                            if (temp < 0) {
-                                temp = -temp;
-                            }
-
-                            float amp = (0.333f / 2.0f) - temp;
-
-                            float threshold = (80 * amp * terrain_perlin) + 139;
-
-                            if (y <= threshold) {
-                                if(y + 1 > threshold) {
-                                    setGlobalBlockAt(x, y, z, GRASS);
-                                    if (noise(x, z) > 0.97f) {
-
-                                        bool ctd = true;
-                                        for(int i = -2; i <= 2; i++) {
-                                            for(int j = -2; j <= 2; j++) {
-                                                if (!hasChunkAt(x + i, z + j) || noise(x+i, z+j) > 0.99f) {
-                                                    ctd = false;
-                                                }
-                                            }
-                                        }
-
-                                        if(ctd) {
-                                            setGlobalBlockAt(x, y+1, z, WOOD);
-                                            setGlobalBlockAt(x, y+2, z, WOOD);
-                                            setGlobalBlockAt(x, y+3, z, WOOD);
-                                            setGlobalBlockAt(x, y+4, z, WOOD);
-                                            setGlobalBlockAt(x, y+5, z, WOOD);
-                                            setGlobalBlockAt(x, y+6, z, WOOD);
-                                            setGlobalBlockAt(x, y+7, z, LEAVES);
-
-                                            for(int i = -2; i <= 2; i++) {
-                                                for(int j = -2; j <= 2; j++) {
-                                                    if (i == 0  && j == 0) {
-                                                        continue;
-                                                    }
-
-                                                    setGlobalBlockAt(x+i, y+4, z+j, LEAVES);
-                                                }
-                                            }
-
-                                            for(int i = -1; i <= 1; i++) {
-                                                for(int j = -1; j <= 1; j++) {
-                                                    if (i == 0  && j == 0) {
-                                                        continue;
-                                                    }
-
-                                                    setGlobalBlockAt(x+i, y+6, z+j, LEAVES);
-                                                }
-                                            }
-                                        }
-
-
-                                    }
-                                } else {
-                                    setGlobalBlockAt(x, y, z, DIRT);
-                                }
-                            }
-
-
                         } else {
-                            //     //Snowy Mountains
+                            // split into four biomes:
+                            float terrainPercent = (typeTerrain - 139) / 30;
+                            // 0 to 1
+                            if (terrainPercent < 0.333f) {
+                                // std::cout << "A" << x << ", " << z << std::endl;
 
-                            float temp = terrainPercent - (0.333f * 2.5);
-                            if (temp < 0) {
-                                temp = -temp;
-                            }
-                            float amp = (0.333f / 2.0f) - temp;
+                                float temp = (terrainPercent - (0.333f * 0.5));
+                                if (temp < 0) {
+                                    temp = -temp;
+                                }
 
+                                float amp = (0.333f / 2.0f) - temp;
 
-                            float threshold = 360 * amp * terrain_perlin + 139;
+                                float threshold = (80 * amp * terrain_perlin) + 139;
 
-                            if (y <= threshold) {
-                                if(y + 1 > threshold) {
-                                    setGlobalBlockAt(x, y, z, SNOW);
-
-                                    if (noise(x, z) > 0.97f) {
-
-                                        bool ctd = true;
-                                        for(int i = -2; i <= 2; i++) {
-                                            for(int j = -2; j <= 2; j++) {
-                                                if (!hasChunkAt(x + i, z + j) || noise(x+i, z+j) > 0.97f) {
-                                                    ctd = false;
+                                if (y <= threshold) {
+                                    if (dist > 0.1) {
+                                        setGlobalBlockAt(x, y, z, SAND);
+                                        if(y+1 > threshold) {
+                                            if (x % 10 == (int)(threshold) % 10 && z % 10 == (int)(threshold) % 10) {
+                                                setGlobalBlockAt(x, y+1, z, CACTUS);
+                                                setGlobalBlockAt(x, y+2, z, CACTUS);
+                                                setGlobalBlockAt(x, y+3, z, CACTUS);
+                                                if (x % 10 > 4) {
+                                                    setGlobalBlockAt(x, y+4, z, CACTUS);
                                                 }
                                             }
                                         }
+                                    } else {
+                                        setGlobalBlockAt(x, y-1, z, WATER);
+                                        setGlobalBlockAt(x, y, z, EMPTY);
+                                    }
+                                }
+                            } else if (terrainPercent < 0.666f) {
+                                //     //Grass
+                                // std::cout << "B " << x << ", " << z << std::endl;
+                                float temp = (terrainPercent - (0.333f * 1.5));
+                                if (temp < 0) {
+                                    temp = -temp;
+                                }
 
-                                        if(!ctd) {
-                                            break;
-                                        }
+                                float amp = (0.333f / 2.0f) - temp;
 
-                                        if(ctd) {
-                                            setGlobalBlockAt(x, y+1, z, WOOD);
-                                            setGlobalBlockAt(x, y+2, z, WOOD);
-                                            setGlobalBlockAt(x, y+3, z, WOOD);
-                                            setGlobalBlockAt(x, y+4, z, WOOD);
-                                            setGlobalBlockAt(x, y+5, z, WOOD);
-                                            setGlobalBlockAt(x, y+6, z, WOOD);
-                                            setGlobalBlockAt(x, y+7, z, LEAVES);
+                                float threshold = (80 * amp * terrain_perlin) + 139;
 
-                                    //         for(int i = -2; i <= 2; i++) {
-                                    //             for(int j = -2; j <= 2; j++) {
-                                    //                 if (i == 0  && j == 0) {
-                                    //                     continue;
-                                    //                 }
+                                if (y <= threshold) {
+                                    if(y + 1 > threshold) {
+                                        if(dist > 0.1) {
+                                            setGlobalBlockAt(x, y, z, GRASS);
+                                            if (noise(x, z) > 0.97f) {
 
-                                    //                 setGlobalBlockAt(x+i, y+4, z+j, LEAVES);
-                                    //             }
-                                    //         }
+                                                bool ctd = true;
+                                                for(int i = -3; i <= 3; i++) {
+                                                    for(int j = -3; j <= 3; j++) {
+                                                        if ((x + i) % 16 == 0 || (z + j) % 16 == 0 || noise(x+i, z+j) > 0.99f) {
+                                                            ctd = false;
+                                                        }
+                                                    }
+                                                }
 
-                                            for(int i = -1; i <= 1; i++) {
-                                                for(int j = -1; j <= 1; j++) {
-                                                    if (i == 0  && j == 0) {
-                                                        continue;
+                                                if(ctd) {
+                                                    setGlobalBlockAt(x, y+1, z, WOOD);
+                                                    setGlobalBlockAt(x, y+2, z, WOOD);
+                                                    setGlobalBlockAt(x, y+3, z, WOOD);
+                                                    setGlobalBlockAt(x, y+4, z, WOOD);
+                                                    setGlobalBlockAt(x, y+5, z, WOOD);
+                                                    setGlobalBlockAt(x, y+6, z, WOOD);
+                                                    setGlobalBlockAt(x, y+7, z, LEAVES);
+
+                                                    for(int i = -2; i <= 2; i++) {
+                                                        for(int j = -2; j <= 2; j++) {
+                                                            if (i == 0  && j == 0) {
+                                                                continue;
+                                                            }
+
+                                                            setGlobalBlockAt(x+i, y+4, z+j, LEAVES);
+                                                        }
                                                     }
 
-                                                    setGlobalBlockAt(x+i, y+6, z+j, LEAVES);
+                                                    for(int i = -1; i <= 1; i++) {
+                                                        for(int j = -1; j <= 1; j++) {
+                                                            if (i == 0  && j == 0) {
+                                                                continue;
+                                                            }
+
+                                                            setGlobalBlockAt(x+i, y+6, z+j, LEAVES);
+                                                        }
+                                                    }
                                                 }
                                             }
+                                        } else {
+                                            setGlobalBlockAt(x, y-1, z, WATER);
+                                            setGlobalBlockAt(x, y, z, EMPTY);
                                         }
+                                    } else {
+                                        setGlobalBlockAt(x, y, z, DIRT);
                                     }
-                                } else {
-                                    setGlobalBlockAt(x, y, z, ICE);
+                                }
+                            } else {
+                                //     //Snowy Mountains
+
+                                float temp = terrainPercent - (0.333f * 2.5);
+                                if (temp < 0) {
+                                    temp = -temp;
+                                }
+                                float amp = (0.333f / 2.0f) - temp;
+
+
+                                float threshold = 360 * amp * terrain_perlin + 139;
+
+                                if (y <= threshold) {
+                                    if(y + 1 > threshold) {
+                                        setGlobalBlockAt(x, y, z, SNOW);
+
+                                        if (dist > 0.1) {
+                                            if (noise(x, z) > 0.97f) {
+                                                bool ctd = true;
+                                                for(int i = -3; i <= 3; i++) {
+                                                    for(int j = -3; j <= 3; j++) {
+                                                        if ((x + i) % 16 == 0 || (z + j) % 16 == 0 || noise(x+i, z+j) > 0.99f) {
+                                                            ctd = false;
+                                                        }
+                                                    }
+                                                }
+
+                                                if(!ctd) {
+                                                    break;
+                                                }
+
+                                                if(ctd) {
+                                                    setGlobalBlockAt(x, y+1, z, WOOD);
+                                                    setGlobalBlockAt(x, y+2, z, WOOD);
+                                                    setGlobalBlockAt(x, y+3, z, WOOD);
+                                                    setGlobalBlockAt(x, y+4, z, WOOD);
+                                                    setGlobalBlockAt(x, y+5, z, WOOD);
+                                                    setGlobalBlockAt(x, y+6, z, WOOD);
+                                                    setGlobalBlockAt(x, y+7, z, LEAVES);
+
+                                                    for(int i = -2; i <= 2; i++) {
+                                                        for(int j = -2; j <= 2; j++) {
+                                                            if (i == 0  && j == 0) {
+                                                                continue;
+                                                            }
+
+                                                            setGlobalBlockAt(x+i, y+4, z+j, LEAVES);
+                                                        }
+                                                    }
+
+                                                    for(int i = -1; i <= 1; i++) {
+                                                        for(int j = -1; j <= 1; j++) {
+                                                            if (i == 0  && j == 0) {
+                                                                continue;
+                                                            }
+
+                                                            setGlobalBlockAt(x+i, y+6, z+j, LEAVES);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            setGlobalBlockAt(x, y-1, z, WATER);
+                                            setGlobalBlockAt(x, y, z, EMPTY);
+                                        }
+                                    } else {
+                                        setGlobalBlockAt(x, y, z, ICE);
+                                    }
                                 }
                             }
                         }
@@ -457,7 +469,7 @@ void Terrain::GenerateTerrain(int xPos, int zPos)  {
                 }
             }
         }
-    }
+
 
 
     // std::cout << "Part 2 for at " << xPos << ", " << zPos << std::endl;
@@ -576,5 +588,44 @@ float noise(int x, int y) {
     return static_cast<float>(hash) / static_cast<float>(0x7fffffff);
 }
 
+
+
+
+glm::vec2 hash(const glm::ivec2& gridPoint, int seed) {
+    uint32_t hash = gridPoint.x * 73856093 ^ gridPoint.y * 19349663 ^ seed * 83492791;
+    return glm::vec2(
+        (hash & 0xFFFF) / float(0xFFFF),
+        ((hash >> 16) & 0xFFFF) / float(0xFFFF)
+        );
+}
+
+// Function to compute distance to the edge of Voronoi noise
+float distanceToVoronoiEdge(float x, float y, int seed) {
+    glm::vec2 pos(x, y);
+    glm::ivec2 baseCell(glm::floor(pos));
+    float closest = FLT_MAX;
+    float secondClosest = FLT_MAX;
+
+    // Iterate through neighboring cells (3x3 grid around the base cell)
+    for (int j = -1; j <= 1; ++j) {
+        for (int i = -1; i <= 1; ++i) {
+            glm::ivec2 neighborCell = baseCell + glm::ivec2(i, j);
+            glm::vec2 randomPoint = hash(neighborCell, seed);
+            glm::vec2 neighborPoint = glm::vec2(neighborCell) + randomPoint;
+
+            float dist = glm::length(neighborPoint - pos);
+
+            if (dist < closest) {
+                secondClosest = closest;
+                closest = dist;
+            } else if (dist < secondClosest) {
+                secondClosest = dist;
+            }
+        }
+    }
+
+    // Distance to edge is the difference between the closest two distances
+    return secondClosest - closest;
+}
 
 

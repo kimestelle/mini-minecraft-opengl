@@ -1,11 +1,13 @@
 **For milestone 3, Estelle implemented a custom sky and fluid surface waves, Saahil implemented additional biomes and procedurally placed assets, and Jesse completed shadows and underater distortion post-processing.**
 
 ## Estelle
-I implemented sky graphics + day-night cycle with stars and animated sun (some parts of example shader including color palette and algorithms but I made most on my own). applied worley noise FBM to the sky to generate clouds and pixelated the sky for the minecraft vibe.
+I implemented sky graphics + day-night cycle with randomly generated stars and animated sun (some parts of example shader including color palette and algorithms but I made most on my own), generated clouds with worley FBM and pixelated sky for minecraft vibe
 - Also implemented water waves inside the lambert vertex shader (positions and normals) using sine/cosine waves and blinn-phong highlights to accent the wave movements.
 
 ## Saahil
-I implemented multiple biomes using a complex series of noise functions and maps, such that they blend neatly and have varying height fields. I also added procedurally placed trees and cacti throughout their respective biomes.
+I implemented multiple biomes using a complex series of noise functions and maps, such that they blend neatly and have varying height fields. 
+I also added procedurally placed trees and cacti throughout their respective biomes.
+I also implemented a procedural river system based on distance-to-edge voronoi. 
 
 ## Jesse
 First, I implemented shadow mapping. This involves creating a depth texture, and computing the orthographic depth of the terrain from the light perspective. Then, using this texture, I computed whether or not areas are in shadow by comparing their depth from the light vs the texture's closest depth. To make this look better, I worked it into lambert shading to still have ambient light, and implemented a slope-adjusted bias that adjusts the level of bias to face slopes in order to minimize artifacts and shadow acne. I modified the proposed ideas in the shared tutorial to create a custom biased strategy similar to lambert shading, making use of ambient bias and dynamic bias to capture different directions of lighting the best I could. Lastly, I made it so that water and lava, due to their transparency, do not cast shadows. This isn't 100% perfect (still artifacts as shadow mapping has flaws), but captures the right effect. The light was also modified to follow the player around, so there are worldwide shadows.
